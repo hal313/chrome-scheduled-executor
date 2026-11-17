@@ -1,4 +1,5 @@
 import { isWithinWindow, parseTime } from './schedule.js';
+import { compilePattern, urlMatches } from './match.js';
 import { getSettings, saveSettings } from './settings.js';
 
 const $ = (id) => document.getElementById(id);
@@ -36,6 +37,25 @@ async function renderStatus() {
   }
 }
 
+async function updateUrlHint() {
+  const pattern = $('url').value.trim();
+  const el = $('urlHint');
+  if (!pattern) {
+    el.textContent = 'Required. Polling only runs in tabs whose URL matches this pattern.';
+    el.className = 'hint err';
+    return;
+  }
+  if (!compilePattern(pattern)) {
+    el.textContent = 'Not a valid regular expression.';
+    el.className = 'hint err';
+    return;
+  }
+  const tabs = await chrome.tabs.query({});
+  const n = tabs.filter((t) => urlMatches(pattern, t.url)).length;
+  el.textContent = `Case-insensitive match against the full page URL. ${n} open tab(s) match right now.`;
+  el.className = 'hint';
+}
+
 function updateHint() {
   $('windowHint').textContent = describeWindow($('startTime').value, $('stopTime').value);
 }
@@ -45,32 +65,28 @@ async function init() {
   $('enabled').checked = settings.enabled;
   $('startTime').value = settings.startTime;
   $('stopTime').value = settings.stopTime;
-  $('pollUrl').value = settings.pollUrl;
+  $('url').value = settings.url;
   updateHint();
+  updateUrlHint();
   renderStatus();
 
   $('startTime').addEventListener('input', updateHint);
   $('stopTime').addEventListener('input', updateHint);
+  $('url').addEventListener('input', updateUrlHint);
 
   $('form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const pollUrl = $('pollUrl').value.trim();
-
-    // Ask for access to the URL's origin. Must happen inside the click handler.
-    if (pollUrl) {
-      const origin = `${new URL(pollUrl).origin}/*`;
-      const granted = await chrome.permissions.request({ origins: [origin] });
-      if (!granted) {
-        $('lastStatus').textContent = `Permission to access ${origin} was declined; polling that URL will fail.`;
-        $('lastStatus').className = 'hint err';
-      }
+    const url = $('url').value.trim();
+    if (!compilePattern(url)) {
+      updateUrlHint();
+      return;
     }
 
     await saveSettings({
       enabled: $('enabled').checked,
       startTime: $('startTime').value,
       stopTime: $('stopTime').value,
-      pollUrl,
+      url,
     });
 
     $('saved').hidden = false;

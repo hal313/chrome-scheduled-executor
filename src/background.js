@@ -1,7 +1,9 @@
-// Service worker. Wakes once a minute via chrome.alarms and runs poll() only
-// while the current local time is inside the configured start/stop window.
+// Service worker. Wakes once a minute via chrome.alarms and, while the current
+// local time is inside the configured start/stop window, runs poll() inside
+// every open tab whose URL matches the configured `url` regular expression.
 
 import { isWithinWindow, nextMinuteBoundary } from './schedule.js';
+import { urlMatches } from './match.js';
 import { getSettings } from './settings.js';
 
 const ALARM_NAME = 'poll-tick';
@@ -9,15 +11,15 @@ const ALARM_NAME = 'poll-tick';
 // ---------------------------------------------------------------------------
 // YOUR POLLING CODE GOES HERE
 // ---------------------------------------------------------------------------
-// This is a placeholder. It fetches the URL from the options page (if one is
-// set) and logs the result. Replace the body with whatever you need to poll.
-// Return a short summary string; it is shown on the options page.
-async function poll(settings) {
-
-
+// This function is injected into each matching tab and runs in that page, so
+// `document` and `window` are the page's. It cannot use variables from this
+// file (it is serialised and sent to the tab), and it receives the settings as
+// its only argument. Return a short summary string; it is shown on the
+// options page.
+function poll(settings) {
   var keyboardEvent = document.createEvent('KeyboardEvent');
   var initMethod = typeof keyboardEvent.initKeyboardEvent !== 'undefined' ? 'initKeyboardEvent' : 'initKeyEvent';
-     
+
   keyboardEvent[initMethod](
     'keydown', // event type: keydown, keyup, keypress
     true, // bubbles
@@ -32,20 +34,15 @@ async function poll(settings) {
   );
   document.dispatchEvent(keyboardEvent);
   console.log('updated at', new Date());
-  return 'updated at' + new Date();
-
-
-  // if (!settings.pollUrl) {
-  //   console.log('[poller] tick (no URL configured)');
-  //   return 'Ran (no URL configured)';
-  // }
-
-  // const res = await fetch(settings.pollUrl, { cache: 'no-store' });
-  // const body = await res.text();
-  // console.log(`[poller] ${settings.pollUrl} -> ${res.status}`, body.slice(0, 200));
-  // return `HTTP ${res.status} (${body.length} bytes)`;
+  return 'updated at ' + new Date().toLocaleTimeString();
 }
 // ---------------------------------------------------------------------------
+
+/** Open tabs whose URL matches the configured pattern. */
+async function findMatchingTabs(pattern) {
+  const tabs = await chrome.tabs.query({});
+  return tabs.filter((tab) => urlMatches(pattern, tab.url));
+}
 
 async function ensureAlarm() {
   const existing = await chrome.alarms.get(ALARM_NAME);
@@ -66,13 +63,31 @@ async function onTick() {
   if (!settings.enabled) return;
   if (!isWithinWindow(new Date(), settings.startTime, settings.stopTime)) return;
 
-  try {
-    const summary = await poll(settings);
-    await recordStatus({ ok: true, summary });
-  } catch (err) {
-    console.error('[poller] poll failed', err);
-    await recordStatus({ ok: false, summary: String(err && err.message ? err.message : err) });
+  const tabs = await findMatchingTabs(settings.url);
+  if (tabs.length === 0) {
+    await recordStatus({ ok: true, summary: 'Skipped: no open tab matches the URL pattern' });
+    return;
   }
+
+  const results = await Promise.allSettled(
+    tabs.map((tab) =>
+      chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: poll,
+        args: [settings],
+      }),
+    ),
+  );
+
+  const failures = results.filter((r) => r.status === 'rejected');
+  failures.forEach((f) => console.error('[poller] poll failed', f.reason));
+
+  const first = results.find((r) => r.status === 'fulfilled');
+  const summary = first ? first.value[0]?.result : String(failures[0].reason?.message ?? failures[0].reason);
+  await recordStatus({
+    ok: failures.length === 0,
+    summary: `${tabs.length} tab(s), ${failures.length} failed. ${summary ?? ''}`.trim(),
+  });
 }
 
 chrome.runtime.onInstalled.addListener(async (details) => {

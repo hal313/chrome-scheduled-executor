@@ -33,7 +33,7 @@ label { display: flex; flex-direction: column; gap: 4px; font-weight: 500; }
 .checkbox { flex-direction: row; align-items: center; gap: 8px; }
 .times { display: flex; gap: 12px; }
 .times label { flex: 1; }
-input[type="time"], input[type="url"] {
+input[type="time"], input[type="text"] {
   font: inherit; padding: 6px 8px; border: 1px solid var(--border);
   border-radius: 6px; background: transparent; color: inherit;
 }

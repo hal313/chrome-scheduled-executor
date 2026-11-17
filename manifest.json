@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
   "name": "Scheduled Poller",
-  "version": "1.0.0",
-  "description": "Runs polling code in the background every minute, only between a start and stop time you choose.",
-  "permissions": ["alarms", "storage"],
-  "optional_host_permissions": ["https://*/*", "http://*/*"],
+  "version": "1.1.0",
+  "description": "Runs polling code every minute in pages matching a URL pattern, only between a start and stop time you choose.",
+  "permissions": ["alarms", "storage", "scripting"],
+  "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "src/background.js",
     "type": "module"

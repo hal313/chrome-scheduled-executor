@@ -25,9 +25,10 @@
       </div>
       <p class="hint" id="windowHint"></p>
 
-      <label class="row">URL to poll (optional)
-        <input type="url" id="pollUrl" placeholder="https://example.com/api/status">
+      <label>URL pattern (regular expression)
+        <input type="text" id="url" spellcheck="false" placeholder="teams\.microsoft\.com">
       </label>
+      <p class="hint" id="urlHint"></p>
 
       <button type="submit">Save</button>
       <span id="saved" class="saved" hidden>Saved</span>

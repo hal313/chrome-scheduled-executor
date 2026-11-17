@@ -59,7 +59,7 @@ extension's service worker console (`chrome://extensions` → **service worker**
 - On each tick the service worker loads settings, checks `isWithinWindow()` against the current local
   time, finds open tabs where `urlMatches()` is true, and injects `poll()` into each of them.
 - The extension asks for access to all sites (`<all_urls>`) because the pattern is a regex and can
-  match any site. Chrome only lets it touch a page when your pattern matches it.
+  match any site. It only runs code in tabs your pattern matches.
 - Chrome must be running for polling to happen. If the computer is asleep, missed ticks are skipped.
 
 ## Project layout

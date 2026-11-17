@@ -9,6 +9,13 @@
   <main>
     <h1>Scheduled Executor</h1>
 
+    <div id="userScriptsBanner" class="banner" hidden>
+      <strong>One-time setup needed.</strong> Chrome only lets an extension run code from its settings
+      after you turn on <em>Allow User Scripts</em> for it.
+      <button type="button" id="openDetails">Open extension details</button>
+      <span class="hint">Turn on "Allow User Scripts", then come back to this page.</span>
+    </div>
+
     <form id="form">
       <label class="row checkbox">
         <input type="checkbox" id="enabled">
@@ -29,6 +36,11 @@
         <input type="text" id="url" spellcheck="false" placeholder="teams\.microsoft\.com">
       </label>
       <p class="hint" id="urlHint"></p>
+
+      <label>Code to execute (JavaScript)
+        <textarea id="code" rows="12" spellcheck="false" wrap="off"></textarea>
+      </label>
+      <p class="hint" id="codeHint">Runs in each matching page like code typed into its DevTools console. You can use <code>await</code>, and whatever you <code>return</code> is shown below as the last run.</p>
 
       <button type="submit">Save</button>
       <span id="saved" class="saved" hidden>Saved</span>

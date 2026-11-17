@@ -1,40 +1,53 @@
 // Service worker. Wakes once a minute via chrome.alarms and, while the current
-// local time is inside the configured start/stop window, runs execute() inside
-// every open tab whose URL matches the configured `url` regular expression.
+// local time is inside the configured start/stop window, runs the code from the
+// settings page (see execute()) in every open tab whose URL matches the configured `url` regular expression.
 
 import { isWithinWindow, nextMinuteBoundary } from './schedule.js';
 import { urlMatches } from './match.js';
-import { getSettings } from './settings.js';
+import { getSettings, userScriptsAvailable } from './settings.js';
 
 const ALARM_NAME = 'execute-tick';
 
 // ---------------------------------------------------------------------------
-// YOUR EXECUTION CODE GOES HERE
+// execute(): runs the code from the settings page inside one tab
 // ---------------------------------------------------------------------------
-// This function is injected into each matching tab and runs in that page, so
-// `document` and `window` are the page's. It cannot use variables from this
-// file (it is serialised and sent to the tab), and it receives the settings as
-// its only argument. Return a short summary string; it is shown on the
-// options page.
-function execute(settings) {
-  var keyboardEvent = document.createEvent('KeyboardEvent');
-  var initMethod = typeof keyboardEvent.initKeyboardEvent !== 'undefined' ? 'initKeyboardEvent' : 'initKeyEvent';
+// The code is injected with chrome.userScripts.execute() into the page's MAIN
+// world, so it behaves like code typed into that page's DevTools console:
+// `document`, `window` and the page's own globals are all available. It is
+// wrapped in an async function, so it may use `await` and `return` a value;
+// the returned value is shown as the last-run summary on the settings page.
 
-  keyboardEvent[initMethod](
-    'keydown', // event type: keydown, keyup, keypress
-    true, // bubbles
-    true, // cancelable
-    window, // view: should be window
-    false, // ctrlKey
-    false, // altKey
-    false, // shiftKey
-    false, // metaKey
-    0, // keyCode: unsigned long - the virtual key code, else 0
-    60, // charCode: unsigned long - the Unicode character associated with the depressed key, else 0
-  );
-  document.dispatchEvent(keyboardEvent);
-  console.log('updated at', new Date());
-  return 'updated at ' + new Date().toLocaleTimeString();
+// Runs the user's code and reports back { ok, value } or { ok: false, error },
+// because an exception thrown inside the page doesn't reach the extension.
+function wrap(code) {
+  return `(async () => {
+  try {
+    const value = await (async () => {
+${code}
+    })();
+    if (value === undefined) return { ok: true };
+    let text;
+    try { text = typeof value === 'string' ? value : JSON.stringify(value); } catch { text = String(value); }
+    return { ok: true, value: text };
+  } catch (e) {
+    console.error('[executor]', e);
+    return { ok: false, error: String((e && e.message) || e) };
+  }
+})()`;
+}
+
+async function execute(tab, settings) {
+  const [injection] = await chrome.userScripts.execute({
+    target: { tabId: tab.id },
+    world: 'MAIN',
+    injectImmediately: true,
+    js: [{ code: wrap(settings.code) }],
+  });
+  if (injection && injection.error) throw new Error(injection.error);
+  const outcome = injection && injection.result;
+  if (!outcome) throw new Error('No result from page (it may have navigated away)');
+  if (!outcome.ok) throw new Error(outcome.error);
+  return outcome.value;
 }
 // ---------------------------------------------------------------------------
 
@@ -69,24 +82,30 @@ async function onTick() {
     return;
   }
 
-  const results = await Promise.allSettled(
-    tabs.map((tab) =>
-      chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: execute,
-        args: [settings],
-      }),
-    ),
-  );
+  if (!settings.code || settings.code.trim() === '') {
+    await recordStatus({ ok: true, summary: 'Skipped: no code configured' });
+    return;
+  }
+  if (!userScriptsAvailable()) {
+    await recordStatus({
+      ok: false,
+      summary: 'Not run: turn on "Allow User Scripts" for this extension in chrome://extensions (Details).',
+    });
+    return;
+  }
+
+  const results = await Promise.allSettled(tabs.map((tab) => execute(tab, settings)));
 
   const failures = results.filter((r) => r.status === 'rejected');
-  failures.forEach((f) => console.error('[executor] execution failed', f.reason));
+  failures.forEach((f) => console.error('[executor] execute failed', f.reason));
 
   const first = results.find((r) => r.status === 'fulfilled');
-  const summary = first ? first.value[0]?.result : String(failures[0].reason?.message ?? failures[0].reason);
+  const detail = first
+    ? (first.value === undefined ? '' : String(first.value))
+    : String(failures[0].reason?.message ?? failures[0].reason);
   await recordStatus({
     ok: failures.length === 0,
-    summary: `${tabs.length} tab(s), ${failures.length} failed. ${summary ?? ''}`.trim(),
+    summary: `${tabs.length} tab(s), ${failures.length} failed. ${detail}`.trim(),
   });
 }
 
@@ -96,6 +115,12 @@ chrome.runtime.onInstalled.addListener(async (details) => {
 });
 
 chrome.runtime.onStartup.addListener(ensureAlarm);
+
+// The settings page asks here: an already-open page doesn't notice when
+// "Allow User Scripts" is switched on, but the service worker does.
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+  if (msg && msg.type === 'userScriptsAvailable') sendResponse(userScriptsAvailable());
+});
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === ALARM_NAME) onTick();

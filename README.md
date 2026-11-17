@@ -1,6 +1,6 @@
 # Scheduled Executor (Chrome extension)
 
-A Manifest V3 Chrome extension that runs execution code **every minute** inside open tabs whose URL
+A Manifest V3 Chrome extension that runs JavaScript you enter **every minute** inside open tabs whose URL
 matches a pattern you choose, but only between a **start time** and **stop time** you choose.
 
 ## Install (load unpacked)
@@ -9,7 +9,10 @@ matches a pattern you choose, but only between a **start time** and **stop time*
 2. Open `chrome://extensions` in Chrome.
 3. Turn on **Developer mode** (top-right toggle).
 4. Click **Load unpacked** and select the repo folder (the one containing `manifest.json`).
-5. The settings page opens automatically on first install. You can reopen it any time from the
+5. On the extension's card click **Details** and turn on **Allow User Scripts**. Chrome requires this
+   for any extension that runs code you type in rather than code it shipped with; until it's on, the
+   settings page shows a banner with a button that takes you there.
+6. The settings page opens automatically on first install. You can reopen it any time from the
    toolbar icon (pin it via the puzzle-piece menu) or from the extension's **Details → Extension options**.
 
 After editing code, click the reload icon on the extension's card in `chrome://extensions`.
@@ -21,6 +24,7 @@ After editing code, click the reload icon on the extension's card in `chrome://e
 | Executing enabled | Master on/off switch.                                                    |
 | Start / Stop      | Local-time window (24h). Executes at the start minute, stops at the stop minute. |
 | URL pattern       | Required. A regular expression tested (case-insensitive) against each open tab's full URL. Execution only runs in tabs that match. |
+| Code to execute   | The JavaScript run in each matching tab every minute. See below. Starts as the keydown snippet. |
 
 Window rules:
 
@@ -56,26 +60,43 @@ For this to work:
   storage. Don't remove it: without it, an unpacked extension's ID depends on its folder path and each
   machine would keep separate settings.
 
-## Adding your execution logic
+## The code to execute
 
-Open `src/background.js` and edit `execute()` (between the `YOUR EXECUTING CODE GOES HERE` markers). It is
-injected into each matching tab with `chrome.scripting.executeScript`, so it runs in the page and
-`document`/`window` are that page's. Because it is serialised and sent to the tab, it can't use other
-variables or imports from `background.js`; it receives the settings as its only argument. Return a
-short summary string; it is shown on the settings page.
+Type the code in the **Code to execute** box on the settings page and click **Save**. It syncs with
+the other settings, so it's the same in every Chrome you're signed in to.
 
-Logs from `execute()` appear in the **page's** DevTools console. Logs from the scheduler appear in the
-extension's service worker console (`chrome://extensions` → **service worker**).
+The code runs inside each matching page, the same as if you pasted it into that page's DevTools
+console:
+
+- `document`, `window` and the page's own JavaScript globals are available.
+- It runs inside an `async` function, so you can use `await`.
+- Whatever you `return` is shown as **Last run** on the settings page (objects are shown as JSON).
+- If it throws, the error message is shown as **Last run** in red, and the full error is logged to the
+  page's DevTools console.
+- `console.log` output appears in the **page's** DevTools console. The extension's own log lines
+  appear in its service worker console (`chrome://extensions` → **service worker**).
+- The code can be up to about 8 KB, which is Chrome sync's limit for one setting.
+
+Example:
+
+```js
+const unread = document.querySelectorAll('.unread').length;
+return `${unread} unread`;
+```
+
+Behind the scenes, `execute()` in `src/background.js` wraps the code and injects it with
+`chrome.userScripts.execute()` into the page's main world. Pages' Content Security Policy doesn't block
+it, unlike `eval`, which Manifest V3 doesn't allow in extensions.
 
 ## How it works
 
 - `chrome.alarms` fires once a minute (aligned to the top of the minute). This is the minimum period
   Chrome allows and it survives the service worker being suspended.
 - On each tick the service worker loads settings, checks `isWithinWindow()` against the current local
-  time, finds open tabs where `urlMatches()` is true, and injects `execute()` into each of them.
+  time, finds open tabs where `urlMatches()` is true, and runs your code in each of them with `execute()`.
 - The extension asks for access to all sites (`<all_urls>`) because the pattern is a regex and can
   match any site. It only runs code in tabs your pattern matches.
-- Chrome must be running for execution to happen. If the computer is asleep, missed ticks are skipped.
+- Chrome must be running for anything to execute. If the computer is asleep, missed ticks are skipped.
 
 ## Project layout
 

@@ -38,8 +38,23 @@ If no open tab matches, that minute is skipped. The settings page shows how many
 you type, and refuses to save an invalid pattern. Settings saved under the old `pollUrl` name are
 moved to `url` automatically.
 
-Settings are stored in `chrome.storage.sync`, so they follow your Chrome profile. The result of the
-last poll is shown on the settings page.
+The result of the last poll is shown on the settings page.
+
+## Syncing settings across browsers
+
+Settings are stored in `chrome.storage.sync`, so every Chrome where you're signed in to the same
+Google account shares them. A change saved on one machine shows up on the others within a few
+seconds to a minute, and an open settings page refreshes itself when it arrives. The last-poll status
+is kept per browser and isn't synced.
+
+For this to work:
+
+- Sign in to Chrome and turn on sync (Settings → **You and Google**), with **Extensions** included in
+  what's synced (or "Sync everything").
+- Load the extension on each machine. The `key` in `manifest.json` gives it the same extension ID
+  (`lljoikaibpmdnlhgjfegegbkogjbipon`) wherever it's loaded from, which is what lets the copies share
+  storage. Don't remove it: without it, an unpacked extension's ID depends on its folder path and each
+  machine would keep separate settings.
 
 ## Adding your polling logic
 

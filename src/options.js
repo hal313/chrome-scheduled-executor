@@ -60,7 +60,7 @@ function updateHint() {
   $('windowHint').textContent = describeWindow($('startTime').value, $('stopTime').value);
 }
 
-async function init() {
+async function fillForm() {
   const settings = await getSettings();
   $('enabled').checked = settings.enabled;
   $('startTime').value = settings.startTime;
@@ -68,6 +68,10 @@ async function init() {
   $('url').value = settings.url;
   updateHint();
   updateUrlHint();
+}
+
+async function init() {
+  await fillForm();
   renderStatus();
 
   $('startTime').addEventListener('input', updateHint);
@@ -94,7 +98,11 @@ async function init() {
     renderStatus();
   });
 
-  chrome.storage.onChanged.addListener(renderStatus);
+  chrome.storage.onChanged.addListener((changes, area) => {
+    // Settings saved in another Chrome (same Google account) arrive via sync.
+    if (area === 'sync') fillForm();
+    renderStatus();
+  });
 }
 
 init();

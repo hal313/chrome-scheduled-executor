@@ -1,4 +1,4 @@
-# Scheduled Poller (Chrome extension)
+# Scheduled Executor (Chrome extension)
 
 A Manifest V3 Chrome extension that runs polling code **every minute** inside open tabs whose URL
 matches a pattern you choose, but only between a **start time** and **stop time** you choose.

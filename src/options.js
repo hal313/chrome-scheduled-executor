@@ -8,9 +8,9 @@ function describeWindow(start, stop) {
   const s = parseTime(start);
   const e = parseTime(stop);
   if (s === null || e === null) return '';
-  if (s === e) return 'Start equals stop: polls all day.';
-  if (s > e) return `Crosses midnight: polls from ${start} until ${stop} the next day.`;
-  return `Polls every minute from ${start} until ${stop}.`;
+  if (s === e) return 'Start equals stop: executes all day.';
+  if (s > e) return `Crosses midnight: executes from ${start} until ${stop} the next day.`;
+  return `Executes every minute from ${start} until ${stop}.`;
 }
 
 async function renderStatus() {

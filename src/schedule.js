@@ -23,7 +23,7 @@ export function parseTime(hhmm) {
  * - start == stop: treated as "all day".
  *
  * The start minute is included and the stop minute is excluded, so a 09:00-17:00
- * window polls at 09:00 and 16:59 but not at 17:00.
+ * window executes at 09:00 and 16:59 but not at 17:00.
  *
  * @param {Date} date
  * @param {string} startHHMM

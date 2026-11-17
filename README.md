@@ -1,6 +1,6 @@
 # Scheduled Executor (Chrome extension)
 
-A Manifest V3 Chrome extension that runs polling code **every minute** inside open tabs whose URL
+A Manifest V3 Chrome extension that runs execution code **every minute** inside open tabs whose URL
 matches a pattern you choose, but only between a **start time** and **stop time** you choose.
 
 ## Install (load unpacked)
@@ -16,17 +16,17 @@ After editing code, click the reload icon on the extension's card in `chrome://e
 
 ## Settings
 
-| Setting         | Meaning                                                                  |
-|-----------------|--------------------------------------------------------------------------|
-| Polling enabled | Master on/off switch.                                                    |
-| Start / Stop    | Local-time window (24h). Polls at the start minute, stops at the stop minute. |
-| URL pattern     | Required. A regular expression tested (case-insensitive) against each open tab's full URL. Polling only runs in tabs that match. |
+| Setting           | Meaning                                                                  |
+|-------------------|--------------------------------------------------------------------------|
+| Executing enabled | Master on/off switch.                                                    |
+| Start / Stop      | Local-time window (24h). Executes at the start minute, stops at the stop minute. |
+| URL pattern       | Required. A regular expression tested (case-insensitive) against each open tab's full URL. Execution only runs in tabs that match. |
 
 Window rules:
 
-- `09:00` → `17:00`: polls 09:00 through 16:59.
-- `22:00` → `06:00`: **crosses midnight**, polls 22:00 through 05:59 the next morning.
-- Start equal to stop: polls all day.
+- `09:00` → `17:00`: executes 09:00 through 16:59.
+- `22:00` → `06:00`: **crosses midnight**, executes 22:00 through 05:59 the next morning.
+- Start equal to stop: executes all day.
 
 URL pattern examples:
 
@@ -38,13 +38,13 @@ If no open tab matches, that minute is skipped. The settings page shows how many
 you type, and refuses to save an invalid pattern. Settings saved under the old `pollUrl` name are
 moved to `url` automatically.
 
-The result of the last poll is shown on the settings page.
+The result of the last execution is shown on the settings page.
 
 ## Syncing settings across browsers
 
 Settings are stored in `chrome.storage.sync`, so every Chrome where you're signed in to the same
 Google account shares them. A change saved on one machine shows up on the others within a few
-seconds to a minute, and an open settings page refreshes itself when it arrives. The last-poll status
+seconds to a minute, and an open settings page refreshes itself when it arrives. The last-execution status
 is kept per browser and isn't synced.
 
 For this to work:

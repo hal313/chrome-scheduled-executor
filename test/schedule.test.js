@@ -37,7 +37,7 @@ test('start equals stop means all day', () => {
   assert.equal(isWithinWindow(at(20, 0), '08:00', '08:00'), true);
 });
 
-test('invalid times never poll', () => {
+test('invalid times never execute', () => {
   assert.equal(isWithinWindow(at(12, 0), '', '17:00'), false);
   assert.equal(isWithinWindow(at(12, 0), '09:00', 'bad'), false);
 });

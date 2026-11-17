@@ -6,10 +6,10 @@ import { isWithinWindow, nextMinuteBoundary } from './schedule.js';
 import { urlMatches } from './match.js';
 import { getSettings } from './settings.js';
 
-const ALARM_NAME = 'poll-tick';
+const ALARM_NAME = 'execute-tick';
 
 // ---------------------------------------------------------------------------
-// YOUR POLLING CODE GOES HERE
+// YOUR EXECUTION CODE GOES HERE
 // ---------------------------------------------------------------------------
 // This function is injected into each matching tab and runs in that page, so
 // `document` and `window` are the page's. It cannot use variables from this

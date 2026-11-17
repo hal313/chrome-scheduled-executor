@@ -80,7 +80,7 @@ async function onTick() {
   );
 
   const failures = results.filter((r) => r.status === 'rejected');
-  failures.forEach((f) => console.error('[poller] poll failed', f.reason));
+  failures.forEach((f) => console.error('[executor] poll failed', f.reason));
 
   const first = results.find((r) => r.status === 'fulfilled');
   const summary = first ? first.value[0]?.result : String(failures[0].reason?.message ?? failures[0].reason);

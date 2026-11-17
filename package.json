@@ -1,5 +1,5 @@
 {
-  "name": "scheduled-poller-extension",
+  "name": "scheduled-executor-extension",
   "version": "1.0.0",
   "private": true,
   "description": "Chrome extension that polls every minute between a start and stop time.",

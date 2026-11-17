@@ -17,8 +17,7 @@ keyboardEvent[initMethod](
   60, // charCode: unsigned long - the Unicode character associated with the depressed key, else 0
 );
 document.dispatchEvent(keyboardEvent);
-console.log('updated at', new Date());
-return 'updated at ' + new Date().toLocaleTimeString();`;
+return 'executed at ' + new Date().toLocaleTimeString();`;
 
 export const DEFAULT_SETTINGS = Object.freeze({
   enabled: true,

@@ -34,8 +34,8 @@ Window rules:
 
 URL pattern examples:
 
-- `teams\.microsoft\.com`: any page on that domain.
-- `^https://teams\.microsoft\.com/v2/`: only that path, and only when the host really is that domain
+- `teams\.cloud\.microsoft`: any page on that domain.
+- `^https://teams\.cloud\.microsoft`: only that path, and only when the host really is that domain
   (the `^` anchor stops it matching the text elsewhere in another site's URL).
 
 If no open tab matches, that minute is skipped. The settings page shows how many open tabs match as
@@ -50,7 +50,7 @@ While the executor is active on a tab (enabled, inside the time window, and the 
 that tab shows:
 
 - **⏱ at the start of the tab title.** It's re-added if the page changes its own title (for example
-  Teams' unread counts).
+unread counts).
 - **A small faded ⏱ dot in the bottom-right corner of the page.** Hover it to see the time and result
   of the last run in that tab; it turns red if the last run failed. It sits in its own shadow DOM so it
   doesn't pick up or affect the page's styles.

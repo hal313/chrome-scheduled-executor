@@ -29,7 +29,7 @@ export function setIndicator(state) {
       if (!document.title.startsWith(prefix)) document.title = prefix + document.title;
     };
     apply();
-    // Apps like Teams rewrite the title constantly (unread counts etc.), so
+    // Apps can rewrite the title constantly (unread counts etc.), so
     // re-apply the prefix whenever the <title> element changes.
     ctx.observer = new MutationObserver(apply);
     ctx.observer.observe(document.head || document.documentElement, {

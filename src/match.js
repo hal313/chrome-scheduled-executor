@@ -18,7 +18,7 @@ export function compilePattern(pattern) {
 /**
  * Does `pageUrl` match the configured pattern? The pattern is a regular
  * expression tested against the full page URL, so a bare domain such as
- * `teams\.microsoft\.com` matches any page on that site.
+ * `teams\.cloud\.microsoft` matches any page on that site.
  * @param {string} pattern
  * @param {string} pageUrl
  * @returns {boolean}

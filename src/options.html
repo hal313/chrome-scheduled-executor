@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Scheduled Poller</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <h1>Scheduled Poller</h1>
+
+    <form id="form">
+      <label class="row checkbox">
+        <input type="checkbox" id="enabled">
+        Polling enabled
+      </label>
+
+      <div class="times">
+        <label>Start
+          <input type="time" id="startTime" required>
+        </label>
+        <label>Stop
+          <input type="time" id="stopTime" required>
+        </label>
+      </div>
+      <p class="hint" id="windowHint"></p>
+
+      <label class="row">URL to poll (optional)
+        <input type="url" id="pollUrl" placeholder="https://example.com/api/status">
+      </label>
+
+      <button type="submit">Save</button>
+      <span id="saved" class="saved" hidden>Saved</span>
+    </form>
+
+    <section class="status">
+      <h2>Status</h2>
+      <p id="state"></p>
+      <p id="lastStatus" class="hint"></p>
+    </section>
+  </main>
+  <script type="module" src="options.js"></script>
+</body>
+</html>

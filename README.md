@@ -24,6 +24,7 @@ After editing code, click the reload icon on the extension's card in `chrome://e
 | Executing enabled | Master on/off switch.                                                    |
 | Start / Stop      | Local-time window (24h). Executes at the start minute, stops at the stop minute. |
 | URL pattern       | Required. A regular expression tested (case-insensitive) against each open tab's full URL. Execution only runs in tabs that match. |
+| Indicators        | Turn the tab-title ⏱ and the page overlay on or off (both on by default). See below. |
 | Code to execute   | The JavaScript run in each matching tab every minute. See below. Starts as the keydown snippet. |
 
 Window rules:
@@ -46,18 +47,29 @@ The result of the last execution is shown on the settings page.
 
 ## Indicators
 
-While the executor is active on a tab (enabled, inside the time window, and the tab's URL matches),
-that tab shows:
+Tabs whose URL matches the pattern can show two indicators. Each has its own checkbox under
+**Indicators on matching tabs** on the settings page; both are on by default and sync like the other
+settings.
 
-- **⏱ at the start of the tab title.** It's re-added if the page changes its own title (for example
-unread counts).
-- **A small faded ⏱ dot in the bottom-right corner of the page.** Hover it to see the time and result
-  of the last execution in that tab; it turns red if the last execution failed. It sits in its own shadow DOM so it
-  doesn't pick up or affect the page's styles.
+**Tab title.** While executing (enabled and inside the time window), the tab title starts with ⏱.
+It's re-added if the page changes its own title (for example unread counts), and removed when
+executing stops.
 
-Both disappear as soon as the tab stops qualifying: outside the time window, executing turned off, the
-pattern changed, or the tab navigated elsewhere. They update when settings change, when a page loads,
-and once a minute. They don't need "Allow User Scripts".
+**Overlay.** A small faded badge in the bottom-right corner of every matching tab. It's always there
+(when turned on) and its look tells you the state:
+
+| Look                                   | State     | Meaning                                         |
+|----------------------------------------|-----------|-------------------------------------------------|
+| Solid blue ⏱ (red if the last run failed) | Executing | Enabled and inside the time window.          |
+| Hollow white ring with ⏸               | Waiting   | Enabled, but outside the time window.           |
+| Dark, dashed ring with ⊘               | Disabled  | "Executing enabled" is turned off.              |
+
+Hover it to see the details: the time window, and while executing, the time and result of the last
+execution in that tab. It sits in its own shadow DOM so it doesn't pick up or affect the page's styles.
+
+Indicators update when settings change, when a page loads, and once a minute (so they switch as the
+time window opens and closes). They're removed when a tab stops matching the pattern. They don't need
+"Allow User Scripts".
 
 ## Syncing settings across browsers
 

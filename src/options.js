@@ -92,6 +92,8 @@ async function fillForm() {
   $('stopTime').value = settings.stopTime;
   $('url').value = settings.url;
   $('code').value = settings.code;
+  $('showTitleIndicator').checked = settings.showTitleIndicator;
+  $('showOverlay').checked = settings.showOverlay;
   updateHint();
   updateUrlHint();
   updateCodeHint();
@@ -138,6 +140,8 @@ async function init() {
       stopTime: $('stopTime').value,
       url,
       code,
+      showTitleIndicator: $('showTitleIndicator').checked,
+      showOverlay: $('showOverlay').checked,
     });
 
     $('saved').hidden = false;

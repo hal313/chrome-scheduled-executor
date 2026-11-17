@@ -76,17 +76,39 @@ function isActive(settings) {
 }
 
 // ---------------------------------------------------------------------------
-// Indicators (title prefix + corner badge) on tabs where the executor is active
+// Indicators (title prefix + corner overlay) on tabs whose URL matches
 // ---------------------------------------------------------------------------
-// Tabs currently showing an indicator are remembered in session storage, so a
-// tab that stops matching (or the window closing) gets its indicator removed.
+// The title prefix shows only while executing. The overlay shows on every
+// matching tab, with a different look for executing / waiting / disabled.
+// Tabs currently showing something are remembered in session storage, so a
+// tab that stops matching gets cleaned up.
 
-async function showIndicator(tabId, active, lastRun) {
+/** What a matching tab should show right now. */
+function indicatorState(settings) {
+  const executing = isActive(settings);
+  const mode = !settings.enabled ? 'disabled' : executing ? 'executing' : 'waiting';
+  const allDay = settings.startTime === settings.stopTime;
+  const labels = {
+    executing: `Scheduled Executor: executing every minute ${allDay ? 'all day' : `until ${settings.stopTime}`}`,
+    waiting: `Scheduled Executor: waiting, executes from ${settings.startTime} to ${settings.stopTime}`,
+    disabled: 'Scheduled Executor: executing is turned off',
+  };
+  return {
+    prefix: TITLE_PREFIX,
+    title: executing && settings.showTitleIndicator,
+    overlay: settings.showOverlay ? mode : null,
+    label: labels[mode],
+  };
+}
+
+const NOTHING = { prefix: TITLE_PREFIX, title: false, overlay: null, label: '' };
+
+async function applyIndicator(tabId, state) {
   try {
     await chrome.scripting.executeScript({
       target: { tabId },
       func: setIndicator,
-      args: [{ active, prefix: TITLE_PREFIX, lastRun }],
+      args: [state],
     });
     return true;
   } catch {
@@ -96,7 +118,8 @@ async function showIndicator(tabId, active, lastRun) {
 
 async function refreshIndicators(settings, onlyTabId) {
   settings ??= await getSettings();
-  const active = isActive(settings);
+  const base = indicatorState(settings);
+  const wantsAny = base.title || base.overlay !== null;
   const { indicatorTabs = [] } = await chrome.storage.session.get('indicatorTabs');
   const { tabRuns = {} } = await chrome.storage.session.get('tabRuns');
   const shown = new Set(indicatorTabs);
@@ -106,11 +129,10 @@ async function refreshIndicators(settings, onlyTabId) {
     : [await chrome.tabs.get(onlyTabId).catch(() => null)].filter(Boolean);
 
   await Promise.all(tabs.map(async (tab) => {
-    const want = active && urlMatches(settings.url, tab.url);
-    if (want) {
-      if (await showIndicator(tab.id, true, tabRuns[tab.id])) shown.add(tab.id);
+    if (wantsAny && urlMatches(settings.url, tab.url)) {
+      if (await applyIndicator(tab.id, { ...base, lastRun: tabRuns[tab.id] })) shown.add(tab.id);
     } else if (shown.has(tab.id)) {
-      await showIndicator(tab.id, false);
+      await applyIndicator(tab.id, NOTHING);
       shown.delete(tab.id);
     }
   }));
@@ -177,7 +199,7 @@ async function onTick() {
   try {
     await runTick(settings);
   } finally {
-    // Every minute, so indicators appear/disappear as the window opens/closes.
+    // Every minute, so indicators change as the time window opens/closes.
     await refreshIndicators(settings);
   }
 }

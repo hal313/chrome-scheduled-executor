@@ -58,3 +58,6 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 }
 .banner .hint { margin: 0; }
 [hidden] { display: none !important; }
+fieldset { border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px 10px; margin: 0 0 12px; }
+legend { font-weight: 500; padding: 0 4px; }
+fieldset .checkbox { font-weight: 400; margin-top: 4px; }

@@ -42,6 +42,18 @@
       </label>
       <p class="hint" id="codeHint">Runs in each matching page like code typed into its DevTools console. You can use <code>await</code>, and whatever you <code>return</code> is shown below as the last execution.</p>
 
+      <fieldset class="row">
+        <legend>Indicators on matching tabs</legend>
+        <label class="checkbox">
+          <input type="checkbox" id="showTitleIndicator">
+          <span>&#x23F1; in the tab title while executing</span>
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" id="showOverlay">
+          <span>Overlay in the page corner (executing, waiting or disabled)</span>
+        </label>
+      </fieldset>
+
       <button type="submit">Save</button>
       <span id="saved" class="saved" hidden>Saved</span>
     </form>

@@ -25,6 +25,8 @@ export const DEFAULT_SETTINGS = Object.freeze({
   stopTime: '17:00', // HH:MM, 24h, local time
   url: '', // regular expression; code only runs in tabs whose URL matches it
   code: DEFAULT_CODE, // JavaScript run in each matching tab (see execute() in background.js)
+  showTitleIndicator: true, // prefix the tab title while executing
+  showOverlay: true, // corner overlay on matching tabs (executing / waiting / disabled)
 });
 
 // chrome.storage.sync allows at most 8 KB per setting.

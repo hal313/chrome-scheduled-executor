@@ -9,7 +9,13 @@
 export const TITLE_PREFIX = '⏱ '; // "⏱ "
 
 /**
- * @param {{ active: boolean, prefix: string, lastRun?: { ok: boolean, summary: string, at: number } }} state
+ * @param {{
+ *   prefix: string,
+ *   title: boolean,                                   // show the title prefix
+ *   overlay: null | 'executing' | 'waiting' | 'disabled',  // overlay look, or null for none
+ *   label: string,                                    // overlay hover text
+ *   lastRun?: { ok: boolean, summary: string, at: number },
+ * }} state
  */
 export function setIndicator(state) {
   const HOST_ID = 'scheduled-executor-indicator';
@@ -17,19 +23,17 @@ export function setIndicator(state) {
   const ctx = (globalThis.__scheduledExecutor ??= { observer: null });
 
   // ---- Tab title -----------------------------------------------------------
-  const stripPrefix = (t) => (t.startsWith(prefix) ? t.slice(prefix.length) : t);
-
   if (ctx.observer) {
     ctx.observer.disconnect();
     ctx.observer = null;
   }
 
-  if (state.active) {
+  if (state.title) {
     const apply = () => {
       if (!document.title.startsWith(prefix)) document.title = prefix + document.title;
     };
     apply();
-    // Apps can rewrite the title constantly (unread counts etc.), so
+    // Apps like Teams rewrite the title constantly (unread counts etc.), so
     // re-apply the prefix whenever the <title> element changes.
     ctx.observer = new MutationObserver(apply);
     ctx.observer.observe(document.head || document.documentElement, {
@@ -37,13 +41,13 @@ export function setIndicator(state) {
       childList: true,
       characterData: true,
     });
-  } else {
-    document.title = stripPrefix(document.title);
+  } else if (document.title.startsWith(prefix)) {
+    document.title = document.title.slice(prefix.length);
   }
 
-  // ---- Corner badge --------------------------------------------------------
+  // ---- Overlay -------------------------------------------------------------
   let host = document.getElementById(HOST_ID);
-  if (!state.active) {
+  if (!state.overlay) {
     if (host) host.remove();
     return;
   }
@@ -59,31 +63,41 @@ export function setIndicator(state) {
         .badge {
           position: fixed; right: 10px; bottom: 10px; z-index: 2147483647;
           display: flex; align-items: center; gap: 6px;
-          height: 22px; max-width: 22px; padding: 0 5px; box-sizing: border-box;
+          height: 22px; max-width: 22px; padding: 0 4px; box-sizing: border-box;
           overflow: hidden; white-space: nowrap; cursor: default;
-          font: 12px/22px system-ui, -apple-system, "Segoe UI", sans-serif;
-          color: #fff; background: rgba(9, 105, 218, .85); border-radius: 11px;
+          font: 12px/20px system-ui, -apple-system, "Segoe UI", sans-serif;
+          border: 1px solid transparent; border-radius: 11px;
           box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
-          opacity: .45; transition: opacity .15s, max-width .2s;
+          transition: opacity .15s, max-width .2s;
         }
-        .badge:hover { opacity: 1; max-width: 420px; padding-right: 10px; }
-        .badge.err { background: rgba(207, 34, 46, .85); }
-        .dot { flex: none; width: 12px; text-align: center; }
+        .badge:hover { opacity: 1; max-width: 460px; padding-right: 10px; }
+        .icon { flex: none; width: 12px; text-align: center; }
         .text { overflow: hidden; text-overflow: ellipsis; }
+
+        /* Executing: solid blue clock. */
+        .executing { color: #fff; background: rgba(9, 105, 218, .9); opacity: .5; }
+        .executing.err { background: rgba(207, 34, 46, .9); }
+        /* Waiting (outside the time window): hollow grey ring with a pause sign. */
+        .waiting { color: #57606a; background: rgba(255, 255, 255, .85); border-color: #8c959f; box-shadow: none; opacity: .5; }
+        /* Disabled: dashed dark ring with a "no" sign. */
+        .disabled { color: #fff; background: rgba(66, 74, 83, .85); border: 1px dashed #d0d7de; opacity: .45; }
       </style>
-      <div class="badge" role="status"><span class="dot">⏱</span><span class="text"></span></div>`;
+      <div class="badge" role="status"><span class="icon"></span><span class="text"></span></div>`;
     (document.body || document.documentElement).appendChild(host);
   }
 
+  const ICONS = { executing: '⏱', waiting: '⏸', disabled: '⊘' }; // ⏱ ⏸ ⊘
   const badge = host.shadowRoot.querySelector('.badge');
-  const text = host.shadowRoot.querySelector('.text');
   const last = state.lastRun;
-  let label = 'Scheduled Executor active';
-  if (last) {
+  let label = state.label;
+  if (last && state.overlay === 'executing') {
     const time = new Date(last.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     label += ` · Last execution ${time}${last.ok ? '' : ' failed'}: ${last.summary}`;
   }
-  text.textContent = label;
+  badge.className = `badge ${state.overlay}`;
+  badge.classList.toggle('err', Boolean(state.overlay === 'executing' && last && !last.ok));
+  badge.dataset.state = state.overlay;
+  host.shadowRoot.querySelector('.icon').textContent = ICONS[state.overlay];
+  host.shadowRoot.querySelector('.text').textContent = label;
   badge.title = label;
-  badge.classList.toggle('err', Boolean(last && !last.ok));
 }

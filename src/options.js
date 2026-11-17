@@ -1,6 +1,6 @@
 import { isWithinWindow, parseTime } from './schedule.js';
 import { compilePattern, urlMatches } from './match.js';
-import { getSettings, saveSettings } from './settings.js';
+import { getSettings, saveSettings, userScriptsAvailable, MAX_CODE_BYTES } from './settings.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,7 +21,7 @@ async function renderStatus() {
   if (!settings.enabled) {
     state.innerHTML = '<span class="off">Disabled</span>';
   } else if (active) {
-    state.innerHTML = '<span class="on">Polling now</span> (inside the window)';
+    state.innerHTML = '<span class="on">Executing now</span> (inside the window)';
   } else {
     state.innerHTML = '<span class="off">Waiting</span> (outside the window)';
   }
@@ -29,10 +29,10 @@ async function renderStatus() {
   const { lastStatus } = await chrome.storage.local.get('lastStatus');
   const el = $('lastStatus');
   if (lastStatus) {
-    el.textContent = `Last poll ${new Date(lastStatus.at).toLocaleString()}: ${lastStatus.summary}`;
+    el.textContent = `Last run ${new Date(lastStatus.at).toLocaleString()}: ${lastStatus.summary}`;
     el.className = lastStatus.ok ? 'hint' : 'hint err';
   } else {
-    el.textContent = 'No polls yet.';
+    el.textContent = 'No runs yet.';
     el.className = 'hint';
   }
 }
@@ -41,7 +41,7 @@ async function updateUrlHint() {
   const pattern = $('url').value.trim();
   const el = $('urlHint');
   if (!pattern) {
-    el.textContent = 'Required. Polling only runs in tabs whose URL matches this pattern.';
+    el.textContent = 'Required. Code only runs in tabs whose URL matches this pattern.';
     el.className = 'hint err';
     return;
   }
@@ -56,6 +56,31 @@ async function updateUrlHint() {
   el.className = 'hint';
 }
 
+async function renderUserScriptsBanner() {
+  let ok = userScriptsAvailable();
+  if (!ok) {
+    try { ok = await chrome.runtime.sendMessage({ type: 'userScriptsAvailable' }); } catch { /* worker asleep */ }
+  }
+  $('userScriptsBanner').hidden = Boolean(ok);
+}
+
+function codeTooLong(code) {
+  return new TextEncoder().encode(code).length > MAX_CODE_BYTES;
+}
+
+function updateCodeHint() {
+  const el = $('codeHint');
+  if (codeTooLong($('code').value)) {
+    el.dataset.base ??= el.innerHTML;
+    el.textContent = `Too long: Chrome sync allows about ${MAX_CODE_BYTES / 1000} KB of code.`;
+    el.className = 'hint err';
+  } else if (el.dataset.base) {
+    el.innerHTML = el.dataset.base;
+    delete el.dataset.base;
+    el.className = 'hint';
+  }
+}
+
 function updateHint() {
   $('windowHint').textContent = describeWindow($('startTime').value, $('stopTime').value);
 }
@@ -66,17 +91,33 @@ async function fillForm() {
   $('startTime').value = settings.startTime;
   $('stopTime').value = settings.stopTime;
   $('url').value = settings.url;
+  $('code').value = settings.code;
   updateHint();
   updateUrlHint();
+  updateCodeHint();
 }
 
 async function init() {
   await fillForm();
+  renderUserScriptsBanner();
   renderStatus();
 
   $('startTime').addEventListener('input', updateHint);
   $('stopTime').addEventListener('input', updateHint);
   $('url').addEventListener('input', updateUrlHint);
+  $('code').addEventListener('input', updateCodeHint);
+  $('code').addEventListener('keydown', (e) => {
+    if (e.key === 'Tab' && !e.shiftKey) {
+      e.preventDefault();
+      e.target.setRangeText('  ', e.target.selectionStart, e.target.selectionEnd, 'end');
+    }
+  });
+  $('openDetails').addEventListener('click', () => {
+    chrome.tabs.create({ url: `chrome://extensions/?id=${chrome.runtime.id}` });
+  });
+  // Re-check when the user comes back from turning the switch on.
+  window.addEventListener('focus', renderUserScriptsBanner);
+  document.addEventListener('visibilitychange', renderUserScriptsBanner);
 
   $('form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -85,12 +126,18 @@ async function init() {
       updateUrlHint();
       return;
     }
+    const code = $('code').value;
+    if (codeTooLong(code)) {
+      updateCodeHint();
+      return;
+    }
 
     await saveSettings({
       enabled: $('enabled').checked,
       startTime: $('startTime').value,
       stopTime: $('stopTime').value,
       url,
+      code,
     });
 
     $('saved').hidden = false;

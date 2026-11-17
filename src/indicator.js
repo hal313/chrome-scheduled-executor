@@ -81,7 +81,7 @@ export function setIndicator(state) {
   let label = 'Scheduled Executor active';
   if (last) {
     const time = new Date(last.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    label += ` · last run ${time}${last.ok ? '' : ' failed'}: ${last.summary}`;
+    label += ` · Last execution ${time}${last.ok ? '' : ' failed'}: ${last.summary}`;
   }
   text.textContent = label;
   badge.title = label;

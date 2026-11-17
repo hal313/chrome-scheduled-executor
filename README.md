@@ -52,7 +52,7 @@ that tab shows:
 - **⏱ at the start of the tab title.** It's re-added if the page changes its own title (for example
 unread counts).
 - **A small faded ⏱ dot in the bottom-right corner of the page.** Hover it to see the time and result
-  of the last run in that tab; it turns red if the last run failed. It sits in its own shadow DOM so it
+  of the last execution in that tab; it turns red if the last execution failed. It sits in its own shadow DOM so it
   doesn't pick up or affect the page's styles.
 
 Both disappear as soon as the tab stops qualifying: outside the time window, executing turned off, the
@@ -85,8 +85,8 @@ console:
 
 - `document`, `window` and the page's own JavaScript globals are available.
 - It runs inside an `async` function, so you can use `await`.
-- Whatever you `return` is shown as **Last run** on the settings page (objects are shown as JSON).
-- If it throws, the error message is shown as **Last run** in red, and the full error is logged to the
+- Whatever you `return` is shown as **Last execution** on the settings page (objects are shown as JSON).
+- If it throws, the error message is shown as **Last execution** in red, and the full error is logged to the
   page's DevTools console.
 - `console.log` output appears in the **page's** DevTools console. The extension's own log lines
   appear in its service worker console (`chrome://extensions` → **service worker**).

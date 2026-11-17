@@ -29,10 +29,10 @@ async function renderStatus() {
   const { lastStatus } = await chrome.storage.local.get('lastStatus');
   const el = $('lastStatus');
   if (lastStatus) {
-    el.textContent = `Last run ${new Date(lastStatus.at).toLocaleString()}: ${lastStatus.summary}`;
+    el.textContent = `Last execution ${new Date(lastStatus.at).toLocaleString()}: ${lastStatus.summary}`;
     el.className = lastStatus.ok ? 'hint' : 'hint err';
   } else {
-    el.textContent = 'No runs yet.';
+    el.textContent = 'No executions yet.';
     el.className = 'hint';
   }
 }

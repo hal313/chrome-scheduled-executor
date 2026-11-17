@@ -13,15 +13,37 @@ const ALARM_NAME = 'poll-tick';
 // set) and logs the result. Replace the body with whatever you need to poll.
 // Return a short summary string; it is shown on the options page.
 async function poll(settings) {
-  if (!settings.pollUrl) {
-    console.log('[poller] tick (no URL configured)');
-    return 'Ran (no URL configured)';
-  }
 
-  const res = await fetch(settings.pollUrl, { cache: 'no-store' });
-  const body = await res.text();
-  console.log(`[poller] ${settings.pollUrl} -> ${res.status}`, body.slice(0, 200));
-  return `HTTP ${res.status} (${body.length} bytes)`;
+
+  var keyboardEvent = document.createEvent('KeyboardEvent');
+  var initMethod = typeof keyboardEvent.initKeyboardEvent !== 'undefined' ? 'initKeyboardEvent' : 'initKeyEvent';
+     
+  keyboardEvent[initMethod](
+    'keydown', // event type: keydown, keyup, keypress
+    true, // bubbles
+    true, // cancelable
+    window, // view: should be window
+    false, // ctrlKey
+    false, // altKey
+    false, // shiftKey
+    false, // metaKey
+    0, // keyCode: unsigned long - the virtual key code, else 0
+    60, // charCode: unsigned long - the Unicode character associated with the depressed key, else 0
+  );
+  document.dispatchEvent(keyboardEvent);
+  console.log('updated at', new Date());
+  return 'updated at' + new Date();
+
+
+  // if (!settings.pollUrl) {
+  //   console.log('[poller] tick (no URL configured)');
+  //   return 'Ran (no URL configured)';
+  // }
+
+  // const res = await fetch(settings.pollUrl, { cache: 'no-store' });
+  // const body = await res.text();
+  // console.log(`[poller] ${settings.pollUrl} -> ${res.status}`, body.slice(0, 200));
+  // return `HTTP ${res.status} (${body.length} bytes)`;
 }
 // ---------------------------------------------------------------------------
 

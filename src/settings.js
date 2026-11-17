@@ -2,7 +2,7 @@
 
 export const DEFAULT_SETTINGS = Object.freeze({
   enabled: true,
-  startTime: '09:00', // HH:MM, 24h, local time
+  startTime: '08:00', // HH:MM, 24h, local time
   stopTime: '17:00', // HH:MM, 24h, local time
   pollUrl: '', // optional: URL fetched by the placeholder poll()
 });

@@ -44,6 +44,21 @@ moved to `url` automatically.
 
 The result of the last execution is shown on the settings page.
 
+## Indicators
+
+While the executor is active on a tab (enabled, inside the time window, and the tab's URL matches),
+that tab shows:
+
+- **⏱ at the start of the tab title.** It's re-added if the page changes its own title (for example
+  Teams' unread counts).
+- **A small faded ⏱ dot in the bottom-right corner of the page.** Hover it to see the time and result
+  of the last run in that tab; it turns red if the last run failed. It sits in its own shadow DOM so it
+  doesn't pick up or affect the page's styles.
+
+Both disappear as soon as the tab stops qualifying: outside the time window, executing turned off, the
+pattern changed, or the tab navigated elsewhere. They update when settings change, when a page loads,
+and once a minute. They don't need "Allow User Scripts".
+
 ## Syncing settings across browsers
 
 Settings are stored in `chrome.storage.sync`, so every Chrome where you're signed in to the same
@@ -105,6 +120,7 @@ manifest.json
 src/background.js   service worker: alarm + execute()
 src/schedule.js     pure time-window helpers (unit tested)
 src/match.js        URL-pattern matching (unit tested)
+src/indicator.js    tab-title prefix and corner badge injected into active tabs
 src/settings.js     defaults + chrome.storage helpers
 src/options.*       settings / status page (also the toolbar popup)
 test/               Node unit tests

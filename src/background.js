@@ -5,6 +5,7 @@
 import { isWithinWindow, nextMinuteBoundary } from './schedule.js';
 import { urlMatches } from './match.js';
 import { getSettings, userScriptsAvailable } from './settings.js';
+import { setIndicator, TITLE_PREFIX } from './indicator.js';
 
 const ALARM_NAME = 'execute-tick';
 
@@ -70,11 +71,72 @@ async function recordStatus(status) {
   await chrome.storage.local.set({ lastStatus: { ...status, at: Date.now() } });
 }
 
-async function onTick() {
-  const settings = await getSettings();
+function isActive(settings) {
+  return settings.enabled && isWithinWindow(new Date(), settings.startTime, settings.stopTime);
+}
 
-  if (!settings.enabled) return;
-  if (!isWithinWindow(new Date(), settings.startTime, settings.stopTime)) return;
+// ---------------------------------------------------------------------------
+// Indicators (title prefix + corner badge) on tabs where the executor is active
+// ---------------------------------------------------------------------------
+// Tabs currently showing an indicator are remembered in session storage, so a
+// tab that stops matching (or the window closing) gets its indicator removed.
+
+async function showIndicator(tabId, active, lastRun) {
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      func: setIndicator,
+      args: [{ active, prefix: TITLE_PREFIX, lastRun }],
+    });
+    return true;
+  } catch {
+    return false; // e.g. chrome:// pages, the Web Store, or a tab that just closed
+  }
+}
+
+async function refreshIndicators(settings, onlyTabId) {
+  settings ??= await getSettings();
+  const active = isActive(settings);
+  const { indicatorTabs = [] } = await chrome.storage.session.get('indicatorTabs');
+  const { tabRuns = {} } = await chrome.storage.session.get('tabRuns');
+  const shown = new Set(indicatorTabs);
+
+  const tabs = onlyTabId === undefined
+    ? await chrome.tabs.query({})
+    : [await chrome.tabs.get(onlyTabId).catch(() => null)].filter(Boolean);
+
+  await Promise.all(tabs.map(async (tab) => {
+    const want = active && urlMatches(settings.url, tab.url);
+    if (want) {
+      if (await showIndicator(tab.id, true, tabRuns[tab.id])) shown.add(tab.id);
+    } else if (shown.has(tab.id)) {
+      await showIndicator(tab.id, false);
+      shown.delete(tab.id);
+    }
+  }));
+
+  if (onlyTabId === undefined) {
+    // Forget tabs that no longer exist.
+    const open = new Set(tabs.map((t) => t.id));
+    for (const id of shown) if (!open.has(id)) shown.delete(id);
+  }
+  await chrome.storage.session.set({ indicatorTabs: [...shown] });
+}
+
+async function recordTabRuns(tabs, results) {
+  const { tabRuns = {} } = await chrome.storage.session.get('tabRuns');
+  const at = Date.now();
+  tabs.forEach((tab, i) => {
+    const r = results[i];
+    tabRuns[tab.id] = r.status === 'fulfilled'
+      ? { ok: true, summary: r.value === undefined ? 'ok' : String(r.value), at }
+      : { ok: false, summary: String(r.reason?.message ?? r.reason), at };
+  });
+  await chrome.storage.session.set({ tabRuns });
+}
+
+async function runTick(settings) {
+  if (!isActive(settings)) return;
 
   const tabs = await findMatchingTabs(settings.url);
   if (tabs.length === 0) {
@@ -95,6 +157,7 @@ async function onTick() {
   }
 
   const results = await Promise.allSettled(tabs.map((tab) => execute(tab, settings)));
+  await recordTabRuns(tabs, results);
 
   const failures = results.filter((r) => r.status === 'rejected');
   failures.forEach((f) => console.error('[executor] execute failed', f.reason));
@@ -107,6 +170,16 @@ async function onTick() {
     ok: failures.length === 0,
     summary: `${tabs.length} tab(s), ${failures.length} failed. ${detail}`.trim(),
   });
+}
+
+async function onTick() {
+  const settings = await getSettings();
+  try {
+    await runTick(settings);
+  } finally {
+    // Every minute, so indicators appear/disappear as the window opens/closes.
+    await refreshIndicators(settings);
+  }
 }
 
 chrome.runtime.onInstalled.addListener(async (details) => {
@@ -124,6 +197,24 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === ALARM_NAME) onTick();
+});
+
+// Settings changed (here or synced from another browser): update indicators now.
+chrome.storage.onChanged.addListener((_changes, area) => {
+  if (area === 'sync') refreshIndicators();
+});
+
+// A reload or navigation wipes the page's indicator; put it back.
+chrome.tabs.onUpdated.addListener((tabId, info) => {
+  if (info.status === 'complete' || info.url) refreshIndicators(undefined, tabId);
+});
+
+chrome.tabs.onRemoved.addListener(async (tabId) => {
+  const { tabRuns = {} } = await chrome.storage.session.get('tabRuns');
+  if (tabId in tabRuns) {
+    delete tabRuns[tabId];
+    await chrome.storage.session.set({ tabRuns });
+  }
 });
 
 // Service workers can be restarted at any time; make sure the alarm exists.

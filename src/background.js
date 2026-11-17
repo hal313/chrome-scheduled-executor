@@ -1,5 +1,5 @@
 // Service worker. Wakes once a minute via chrome.alarms and, while the current
-// local time is inside the configured start/stop window, runs poll() inside
+// local time is inside the configured start/stop window, runs execute() inside
 // every open tab whose URL matches the configured `url` regular expression.
 
 import { isWithinWindow, nextMinuteBoundary } from './schedule.js';
@@ -16,7 +16,7 @@ const ALARM_NAME = 'execute-tick';
 // file (it is serialised and sent to the tab), and it receives the settings as
 // its only argument. Return a short summary string; it is shown on the
 // options page.
-function poll(settings) {
+function execute(settings) {
   var keyboardEvent = document.createEvent('KeyboardEvent');
   var initMethod = typeof keyboardEvent.initKeyboardEvent !== 'undefined' ? 'initKeyboardEvent' : 'initKeyEvent';
 
@@ -73,14 +73,14 @@ async function onTick() {
     tabs.map((tab) =>
       chrome.scripting.executeScript({
         target: { tabId: tab.id },
-        func: poll,
+        func: execute,
         args: [settings],
       }),
     ),
   );
 
   const failures = results.filter((r) => r.status === 'rejected');
-  failures.forEach((f) => console.error('[executor] poll failed', f.reason));
+  failures.forEach((f) => console.error('[executor] execution failed', f.reason));
 
   const first = results.find((r) => r.status === 'fulfilled');
   const summary = first ? first.value[0]?.result : String(failures[0].reason?.message ?? failures[0].reason);

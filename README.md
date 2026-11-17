@@ -56,15 +56,15 @@ For this to work:
   storage. Don't remove it: without it, an unpacked extension's ID depends on its folder path and each
   machine would keep separate settings.
 
-## Adding your polling logic
+## Adding your execution logic
 
-Open `src/background.js` and edit `poll()` (between the `YOUR POLLING CODE GOES HERE` markers). It is
+Open `src/background.js` and edit `execute()` (between the `YOUR EXECUTING CODE GOES HERE` markers). It is
 injected into each matching tab with `chrome.scripting.executeScript`, so it runs in the page and
 `document`/`window` are that page's. Because it is serialised and sent to the tab, it can't use other
 variables or imports from `background.js`; it receives the settings as its only argument. Return a
 short summary string; it is shown on the settings page.
 
-Logs from `poll()` appear in the **page's** DevTools console. Logs from the scheduler appear in the
+Logs from `execute()` appear in the **page's** DevTools console. Logs from the scheduler appear in the
 extension's service worker console (`chrome://extensions` → **service worker**).
 
 ## How it works
@@ -72,16 +72,16 @@ extension's service worker console (`chrome://extensions` → **service worker**
 - `chrome.alarms` fires once a minute (aligned to the top of the minute). This is the minimum period
   Chrome allows and it survives the service worker being suspended.
 - On each tick the service worker loads settings, checks `isWithinWindow()` against the current local
-  time, finds open tabs where `urlMatches()` is true, and injects `poll()` into each of them.
+  time, finds open tabs where `urlMatches()` is true, and injects `execute()` into each of them.
 - The extension asks for access to all sites (`<all_urls>`) because the pattern is a regex and can
   match any site. It only runs code in tabs your pattern matches.
-- Chrome must be running for polling to happen. If the computer is asleep, missed ticks are skipped.
+- Chrome must be running for execution to happen. If the computer is asleep, missed ticks are skipped.
 
 ## Project layout
 
 ```
 manifest.json
-src/background.js   service worker: alarm + poll()
+src/background.js   service worker: alarm + execute()
 src/schedule.js     pure time-window helpers (unit tested)
 src/match.js        URL-pattern matching (unit tested)
 src/settings.js     defaults + chrome.storage helpers

@@ -21,7 +21,7 @@ async function renderStatus() {
   if (!settings.enabled) {
     state.innerHTML = '<span class="off">Disabled</span>';
   } else if (active) {
-    state.innerHTML = '<span class="on">Polling now</span> (inside the window)';
+    state.innerHTML = '<span class="on">Executing now</span> (inside the window)';
   } else {
     state.innerHTML = '<span class="off">Waiting</span> (outside the window)';
   }
@@ -29,10 +29,10 @@ async function renderStatus() {
   const { lastStatus } = await chrome.storage.local.get('lastStatus');
   const el = $('lastStatus');
   if (lastStatus) {
-    el.textContent = `Last poll ${new Date(lastStatus.at).toLocaleString()}: ${lastStatus.summary}`;
+    el.textContent = `Last execution ${new Date(lastStatus.at).toLocaleString()}: ${lastStatus.summary}`;
     el.className = lastStatus.ok ? 'hint' : 'hint err';
   } else {
-    el.textContent = 'No polls yet.';
+    el.textContent = 'No executions yet.';
     el.className = 'hint';
   }
 }
@@ -41,7 +41,7 @@ async function updateUrlHint() {
   const pattern = $('url').value.trim();
   const el = $('urlHint');
   if (!pattern) {
-    el.textContent = 'Required. Polling only runs in tabs whose URL matches this pattern.';
+    el.textContent = 'Required. Execution only runs in tabs whose URL matches this pattern.';
     el.className = 'hint err';
     return;
   }

@@ -69,16 +69,32 @@ export function setIndicator(state) {
         :host { all: initial; }
         .wrap {
           position: fixed; right: 10px; bottom: 10px; z-index: 2147483647;
-          display: flex; flex-direction: column; align-items: flex-end;
           font: 12px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
         }
+
+        /* The badge: a small dot that slides open into a pill on hover. */
         .badge {
-          position: relative; width: 22px; height: 22px; box-sizing: border-box;
-          display: flex; align-items: center; justify-content: center; cursor: default;
+          position: relative; display: flex; align-items: center; gap: 6px;
+          height: 22px; max-width: 22px; padding: 0 4px; box-sizing: border-box;
+          white-space: nowrap; cursor: default;
+          font: 12px/20px system-ui, -apple-system, "Segoe UI", sans-serif;
           border: 1px solid transparent; border-radius: 11px;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, .25); transition: opacity .15s;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
+          transition: opacity .15s, max-width .2s;
         }
-        .wrap:hover .badge { opacity: 1; }
+        .clip { display: flex; align-items: center; gap: 6px; overflow: hidden; min-width: 0; }
+        .wrap:hover .badge, .wrap.open .badge { opacity: 1; max-width: 480px; padding-right: 3px; }
+        .icon { flex: none; width: 12px; text-align: center; }
+        .text { overflow: hidden; text-overflow: ellipsis; }
+        .more {
+          flex: none; display: none; width: 18px; height: 16px; padding: 0; margin-left: 2px;
+          font: 700 12px/14px system-ui, sans-serif; letter-spacing: 1px; cursor: pointer;
+          color: inherit; background: rgba(255, 255, 255, .22); border: 0; border-radius: 8px;
+        }
+        .more:hover { background: rgba(255, 255, 255, .4); }
+        .waiting .more { background: rgba(0, 0, 0, .08); }
+        .waiting .more:hover { background: rgba(0, 0, 0, .16); }
+        .wrap:hover .more, .wrap.open .more { display: block; }
 
         /* Executing: solid blue clock. */
         .executing { color: #fff; background: rgba(9, 105, 218, .9); opacity: .5; }
@@ -93,50 +109,64 @@ export function setIndicator(state) {
           border-radius: 50%; background: #d4a72c; border: 1px solid #fff;
         }
 
-        /* Flyout: appears above the badge on hover. The padding bridges the gap
-           so the pointer can move from the badge onto the buttons. */
-        .flyout { display: none; padding-bottom: 6px; }
-        .wrap:hover .flyout, .wrap:focus-within .flyout { display: block; }
+        /* Pop-up with the controls, opened by the "..." button. */
         .panel {
+          display: none; position: absolute; right: 0; bottom: 30px;
           width: 280px; padding: 10px 12px; border-radius: 8px; box-sizing: border-box;
           color: #1f2328; background: #fff; border: 1px solid #d1d9e0;
           box-shadow: 0 4px 16px rgba(0, 0, 0, .18);
         }
+        .wrap.open .panel { display: block; }
         .label { font-weight: 600; }
         .last { color: #59636e; margin-top: 2px; overflow-wrap: anywhere; }
         .last.err { color: #cf222e; }
         .buttons { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-        button {
+        .buttons button {
           font: inherit; font-weight: 600; padding: 3px 8px; border-radius: 6px; cursor: pointer;
           border: 1px solid #d1d9e0; background: #f6f8fa; color: #1f2328;
         }
-        button:hover { background: #eef1f4; }
-        button.primary { background: #0969da; border-color: #0969da; color: #fff; }
-        button.primary:hover { background: #0860c4; }
-        button[hidden] { display: none; }
+        .buttons button:hover { background: #eef1f4; }
+        .buttons button.primary { background: #0969da; border-color: #0969da; color: #fff; }
+        .buttons button.primary:hover { background: #0860c4; }
+        [hidden] { display: none !important; }
       </style>
       <div class="wrap">
-        <div class="flyout">
-          <div class="panel" role="dialog" aria-label="Scheduled Executor">
-            <div class="label"></div>
-            <div class="last"></div>
-            <div class="buttons">
-              <button type="button" class="primary" data-action="on">On for 1 hour</button>
-              <button type="button" data-action="off">Off for 1 hour</button>
-              <button type="button" data-action="resume">Back to schedule</button>
-              <button type="button" data-action="options">Settings</button>
-            </div>
+        <div class="panel" role="dialog" aria-label="Scheduled Executor">
+          <div class="label"></div>
+          <div class="last"></div>
+          <div class="buttons">
+            <button type="button" class="primary" data-action="on">On for 1 hour</button>
+            <button type="button" data-action="off">Off for 1 hour</button>
+            <button type="button" data-action="resume">Back to schedule</button>
+            <button type="button" data-action="options">Settings</button>
           </div>
         </div>
-        <div class="badge" role="status"><span class="icon"></span></div>
+        <div class="badge" role="status">
+          <span class="clip"><span class="icon"></span><span class="text"></span></span>
+          <button type="button" class="more" title="Controls" aria-label="Controls" aria-haspopup="dialog">⋯</button>
+        </div>
       </div>`;
 
+    const wrap = root.querySelector('.wrap');
+    const setOpen = (open) => wrap.classList.toggle('open', open);
+    root.querySelector('.more').addEventListener('click', (e) => {
+      e.stopPropagation();
+      setOpen(!wrap.classList.contains('open'));
+    });
     root.querySelector('.buttons').addEventListener('click', (e) => {
       const action = e.target.closest('button')?.dataset.action;
       if (!action) return;
       if (action === 'options') chrome.runtime.sendMessage({ type: 'openOptions' });
       else chrome.runtime.sendMessage({ type: 'setOverride', mode: action === 'resume' ? null : action });
+      setOpen(false);
     });
+    // Close the pop-up on a click elsewhere on the page, or on Escape.
+    document.addEventListener('click', (e) => {
+      if (!e.composedPath().includes(host)) setOpen(false);
+    }, true);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') setOpen(false);
+    }, true);
     (document.body || document.documentElement).appendChild(host);
     ctx.host = host;
   }
@@ -146,23 +176,28 @@ export function setIndicator(state) {
   const badge = root.querySelector('.badge');
   const last = state.lastRun;
   const failed = Boolean(state.overlay === 'executing' && last && !last.ok);
+  let lastText = '';
+  if (last && state.overlay === 'executing') {
+    const time = new Date(last.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    lastText = `Last execution ${time}${last.ok ? '' : ' failed'}: ${last.summary}`;
+  }
 
   badge.className = `badge ${state.overlay}`;
   badge.classList.toggle('err', failed);
   badge.classList.toggle('overridden', Boolean(state.overridden));
   badge.dataset.state = state.overlay;
-  badge.title = state.label;
   root.querySelector('.icon').textContent = ICONS[state.overlay];
-  root.querySelector('.label').textContent = state.label;
 
+  // Hover pill: one line, as before.
+  const pill = lastText ? `${state.label} · ${lastText}` : state.label;
+  root.querySelector('.text').textContent = pill;
+  root.querySelector('.clip').title = pill;
+
+  // Pop-up: the same details plus the controls.
+  root.querySelector('.label').textContent = state.label;
   const lastEl = root.querySelector('.last');
-  if (last && state.overlay === 'executing') {
-    const time = new Date(last.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    lastEl.textContent = `Last execution ${time}${last.ok ? '' : ' failed'}: ${last.summary}`;
-    lastEl.hidden = false;
-  } else {
-    lastEl.hidden = true;
-  }
+  lastEl.textContent = lastText;
+  lastEl.hidden = !lastText;
   lastEl.classList.toggle('err', failed);
   root.querySelector('[data-action="resume"]').hidden = !state.overridden;
 }

@@ -64,8 +64,9 @@ executing stops.
 | Hollow white ring with ⏸               | Waiting   | Enabled, but outside the time window.           |
 | Dark, dashed ring with ⊘               | Disabled  | "Executing enabled" is turned off, or turned off for 1 hour. |
 
-Hover it to open a small panel with the details (the time window, and while executing, the time and
-result of the last execution in that tab) and these buttons:
+Hover it and it slides open into a one-line pill with the details: the time window, and while
+executing, the time and result of the last execution in that tab. The **⋯** button at the end of the
+pill opens a pop-up with the same details and these buttons:
 
 | Button            | What it does                                                                 |
 |-------------------|------------------------------------------------------------------------------|
@@ -74,7 +75,8 @@ result of the last execution in that tab) and these buttons:
 | Back to schedule  | Shown while one of the above is running; cancels it early.                  |
 | Settings          | Opens the settings page.                                                     |
 
-While a 1-hour override is running, the badge has a small amber dot and the panel says when it ends.
+The pop-up stays open until you pick a button, click elsewhere on the page, or press Escape. While a
+1-hour override is running, the badge has a small amber dot and the pill and pop-up say when it ends.
 After the hour, it goes back to the normal schedule on its own. Overrides sync like the settings, so
 they apply in every signed-in Chrome. The same three override buttons are also on the settings page,
 under **Status**.

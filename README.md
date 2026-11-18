@@ -73,7 +73,7 @@ pill opens a pop-up with the same details and these buttons:
 | On for 1 hour     | Executes every minute for the next hour, even outside the time window or when "Executing enabled" is off. Runs once immediately. |
 | Off for 1 hour    | Stops executing for the next hour, even inside the time window.             |
 | Back to schedule  | Shown while one of the above is running; cancels it early.                  |
-| Settings          | Opens the settings page.                                                     |
+| ⚙ (gear, top-right) | Opens the settings page.                                                   |
 
 The pop-up stays open until you pick a button, click elsewhere on the page, or press Escape. While a
 1-hour override is running, the badge has a small amber dot and the pill and pop-up say when it ends.

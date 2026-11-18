@@ -46,3 +46,42 @@ test('nextMinuteBoundary', () => {
   const d = new Date(2026, 0, 15, 23, 59, 42, 500);
   assert.equal(nextMinuteBoundary(d), new Date(2026, 0, 16, 0, 0, 0, 0).getTime());
 });
+
+import { activeOverride, effectiveState, OVERRIDE_MS } from '../src/schedule.js';
+
+const noon = new Date(2026, 0, 15, 12, 0, 0);
+const base = { enabled: true, startTime: '09:00', stopTime: '17:00' };
+
+test('activeOverride ignores missing, malformed and expired overrides', () => {
+  assert.equal(activeOverride(undefined, noon.getTime()), null);
+  assert.equal(activeOverride({ mode: 'sideways', until: noon.getTime() + 1 }, noon.getTime()), null);
+  assert.equal(activeOverride({ mode: 'on', until: noon.getTime() }, noon.getTime()), null);
+  assert.deepEqual(activeOverride({ mode: 'off', until: noon.getTime() + 1 }, noon.getTime()), { mode: 'off', until: noon.getTime() + 1 });
+});
+
+test('effectiveState without override follows the schedule', () => {
+  assert.equal(effectiveState(base, noon).mode, 'executing');
+  assert.equal(effectiveState({ ...base, startTime: '13:00' }, noon).mode, 'waiting');
+  assert.equal(effectiveState({ ...base, enabled: false }, noon).mode, 'disabled');
+});
+
+test('"on" override executes even when disabled or outside the window', () => {
+  const override = { mode: 'on', until: noon.getTime() + OVERRIDE_MS };
+  assert.equal(effectiveState({ ...base, enabled: false, override }, noon).executing, true);
+  assert.equal(effectiveState({ ...base, startTime: '13:00', override }, noon).executing, true);
+});
+
+test('"off" override stops execution inside the window', () => {
+  const override = { mode: 'off', until: noon.getTime() + OVERRIDE_MS };
+  const s = effectiveState({ ...base, override }, noon);
+  assert.equal(s.executing, false);
+  assert.equal(s.mode, 'disabled');
+  assert.equal(s.override, override);
+});
+
+test('an expired override falls back to the schedule', () => {
+  const override = { mode: 'off', until: noon.getTime() - 1 };
+  const s = effectiveState({ ...base, override }, noon);
+  assert.equal(s.mode, 'executing');
+  assert.equal(s.override, null);
+});

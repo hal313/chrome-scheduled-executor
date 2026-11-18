@@ -27,6 +27,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   code: DEFAULT_CODE, // JavaScript run in each matching tab (see execute() in background.js)
   showTitleIndicator: true, // prefix the tab title while executing
   showOverlay: true, // corner overlay on matching tabs (executing / waiting / disabled)
+  override: null, // { mode: 'on'|'off', until: ms } set by the overlay's 1-hour buttons
 });
 
 // chrome.storage.sync allows at most 8 KB per setting.

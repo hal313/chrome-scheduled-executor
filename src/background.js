@@ -2,7 +2,7 @@
 // local time is inside the configured start/stop window, runs the code from the
 // settings page (see execute()) in every open tab whose URL matches the configured `url` regular expression.
 
-import { isWithinWindow, nextMinuteBoundary } from './schedule.js';
+import { effectiveState, nextMinuteBoundary, OVERRIDE_MS } from './schedule.js';
 import { urlMatches } from './match.js';
 import { getSettings, userScriptsAvailable } from './settings.js';
 import { setIndicator, TITLE_PREFIX } from './indicator.js';
@@ -72,7 +72,11 @@ async function recordStatus(status) {
 }
 
 function isActive(settings) {
-  return settings.enabled && isWithinWindow(new Date(), settings.startTime, settings.stopTime);
+  return effectiveState(settings, new Date()).executing;
+}
+
+function hhmm(ms) {
+  return new Date(ms).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 // ---------------------------------------------------------------------------
@@ -85,23 +89,30 @@ function isActive(settings) {
 
 /** What a matching tab should show right now. */
 function indicatorState(settings) {
-  const executing = isActive(settings);
-  const mode = !settings.enabled ? 'disabled' : executing ? 'executing' : 'waiting';
+  const { mode, executing, override } = effectiveState(settings, new Date());
   const allDay = settings.startTime === settings.stopTime;
-  const labels = {
-    executing: `Scheduled Executor: executing every minute ${allDay ? 'all day' : `until ${settings.stopTime}`}`,
-    waiting: `Scheduled Executor: waiting, executes from ${settings.startTime} to ${settings.stopTime}`,
-    disabled: 'Scheduled Executor: executing is turned off',
-  };
+  let label;
+  if (override && override.mode === 'on') {
+    label = `Scheduled Executor: on until ${hhmm(override.until)} (1-hour override)`;
+  } else if (override) {
+    label = `Scheduled Executor: turned off until ${hhmm(override.until)} (1-hour override)`;
+  } else {
+    label = {
+      executing: `Scheduled Executor: executing every minute ${allDay ? 'all day' : `until ${settings.stopTime}`}`,
+      waiting: `Scheduled Executor: waiting, executes from ${settings.startTime} to ${settings.stopTime}`,
+      disabled: 'Scheduled Executor: executing is turned off',
+    }[mode];
+  }
   return {
     prefix: TITLE_PREFIX,
     title: executing && settings.showTitleIndicator,
     overlay: settings.showOverlay ? mode : null,
-    label: labels[mode],
+    overridden: Boolean(override),
+    label,
   };
 }
 
-const NOTHING = { prefix: TITLE_PREFIX, title: false, overlay: null, label: '' };
+const NOTHING = { prefix: TITLE_PREFIX, title: false, overlay: null, overridden: false, label: '' };
 
 async function applyIndicator(tabId, state) {
   try {
@@ -214,8 +225,27 @@ chrome.runtime.onStartup.addListener(ensureAlarm);
 // The settings page asks here: an already-open page doesn't notice when
 // "Allow User Scripts" is switched on, but the service worker does.
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-  if (msg && msg.type === 'userScriptsAvailable') sendResponse(userScriptsAvailable());
+  if (!msg) return;
+  if (msg.type === 'userScriptsAvailable') sendResponse(userScriptsAvailable());
+  if (msg.type === 'setOverride') setOverride(msg.mode).then(() => sendResponse(true));
+  if (msg.type === 'openOptions') chrome.runtime.openOptionsPage();
+  return msg.type === 'setOverride'; // keep the channel open for the async reply
 });
+
+/**
+ * Buttons on the overlay (and the settings page): 'on' / 'off' for the next
+ * hour, or null to go back to the normal schedule. Stored in sync storage so
+ * every signed-in browser follows it.
+ */
+async function setOverride(mode) {
+  if (mode === 'on' || mode === 'off') {
+    await chrome.storage.sync.set({ override: { mode, until: Date.now() + OVERRIDE_MS } });
+  } else {
+    await chrome.storage.sync.remove('override');
+  }
+  // Execute right away when switched on, instead of waiting for the next minute.
+  if (mode === 'on') await onTick();
+}
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === ALARM_NAME) onTick();

@@ -61,3 +61,5 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 fieldset { border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px 10px; margin: 0 0 12px; }
 legend { font-weight: 500; padding: 0 4px; }
 fieldset .checkbox { font-weight: 400; margin-top: 4px; }
+.override { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0; }
+button.secondary { background: transparent; color: var(--fg); border: 1px solid var(--border); font-weight: 500; padding: 4px 10px; }

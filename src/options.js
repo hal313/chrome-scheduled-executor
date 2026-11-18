@@ -1,4 +1,4 @@
-import { isWithinWindow, parseTime } from './schedule.js';
+import { effectiveState, parseTime } from './schedule.js';
 import { compilePattern, urlMatches } from './match.js';
 import { getSettings, saveSettings, userScriptsAvailable, MAX_CODE_BYTES } from './settings.js';
 
@@ -15,16 +15,24 @@ function describeWindow(start, stop) {
 
 async function renderStatus() {
   const settings = await getSettings();
-  const active = settings.enabled && isWithinWindow(new Date(), settings.startTime, settings.stopTime);
+  const { mode, override } = effectiveState(settings, new Date());
+  const until = override
+    ? new Date(override.until).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : '';
 
   const state = $('state');
-  if (!settings.enabled) {
+  if (override && override.mode === 'on') {
+    state.innerHTML = `<span class="on">Executing now</span> (turned on until ${until})`;
+  } else if (override) {
+    state.innerHTML = `<span class="off">Off</span> (turned off until ${until})`;
+  } else if (mode === 'disabled') {
     state.innerHTML = '<span class="off">Disabled</span>';
-  } else if (active) {
+  } else if (mode === 'executing') {
     state.innerHTML = '<span class="on">Executing now</span> (inside the window)';
   } else {
     state.innerHTML = '<span class="off">Waiting</span> (outside the window)';
   }
+  document.querySelector('[data-override="resume"]').hidden = !override;
 
   const { lastStatus } = await chrome.storage.local.get('lastStatus');
   const el = $('lastStatus');
@@ -114,6 +122,14 @@ async function init() {
       e.target.setRangeText('  ', e.target.selectionStart, e.target.selectionEnd, 'end');
     }
   });
+  document.querySelectorAll('[data-override]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const mode = btn.dataset.override === 'resume' ? null : btn.dataset.override;
+      chrome.runtime.sendMessage({ type: 'setOverride', mode });
+    });
+  });
+  // Overrides expire on their own; keep the status line current.
+  setInterval(renderStatus, 30 * 1000);
   $('openDetails').addEventListener('click', () => {
     chrome.tabs.create({ url: `chrome://extensions/?id=${chrome.runtime.id}` });
   });
@@ -151,7 +167,7 @@ async function init() {
 
   chrome.storage.onChanged.addListener((changes, area) => {
     // Settings saved in another Chrome (same Google account) arrive via sync.
-    if (area === 'sync') fillForm();
+    if (area === 'sync' && Object.keys(changes).some((k) => k !== 'override')) fillForm();
     renderStatus();
   });
 }

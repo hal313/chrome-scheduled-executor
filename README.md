@@ -51,7 +51,7 @@ Tabs whose URL matches the pattern can show two indicators. Each has its own che
 **Indicators on matching tabs** on the settings page; both are on by default and sync like the other
 settings.
 
-**Tab title.** While executing (enabled and inside the time window), the tab title starts with ⏱.
+**Tab title.** While executing (enabled and inside the time window, or turned on for 1 hour), the tab title starts with ⏱.
 It's re-added if the page changes its own title (for example unread counts), and removed when
 executing stops.
 
@@ -60,12 +60,26 @@ executing stops.
 
 | Look                                   | State     | Meaning                                         |
 |----------------------------------------|-----------|-------------------------------------------------|
-| Solid blue ⏱ (red if the last run failed) | Executing | Enabled and inside the time window.          |
+| Solid blue ⏱ (red if the last run failed) | Executing | Enabled and inside the time window, or turned on for 1 hour. |
 | Hollow white ring with ⏸               | Waiting   | Enabled, but outside the time window.           |
-| Dark, dashed ring with ⊘               | Disabled  | "Executing enabled" is turned off.              |
+| Dark, dashed ring with ⊘               | Disabled  | "Executing enabled" is turned off, or turned off for 1 hour. |
 
-Hover it to see the details: the time window, and while executing, the time and result of the last
-execution in that tab. It sits in its own shadow DOM so it doesn't pick up or affect the page's styles.
+Hover it to open a small panel with the details (the time window, and while executing, the time and
+result of the last execution in that tab) and these buttons:
+
+| Button            | What it does                                                                 |
+|-------------------|------------------------------------------------------------------------------|
+| On for 1 hour     | Executes every minute for the next hour, even outside the time window or when "Executing enabled" is off. Runs once immediately. |
+| Off for 1 hour    | Stops executing for the next hour, even inside the time window.             |
+| Back to schedule  | Shown while one of the above is running; cancels it early.                  |
+| Settings          | Opens the settings page.                                                     |
+
+While a 1-hour override is running, the badge has a small amber dot and the panel says when it ends.
+After the hour, it goes back to the normal schedule on its own. Overrides sync like the settings, so
+they apply in every signed-in Chrome. The same three override buttons are also on the settings page,
+under **Status**.
+
+The overlay sits in its own shadow DOM so it doesn't pick up or affect the page's styles.
 
 Indicators update when settings change, when a page loads, and once a minute (so they switch as the
 time window opens and closes). They're removed when a tab stops matching the pattern. They don't need

@@ -2,7 +2,11 @@
 
 All notable changes to Scheduled Executor. Versions match `manifest.json`.
 
-## [Unreleased]
+## [1.6.5] - 2026-11-22
+
+### Fixed
+- Turning off **Show the overlay in the page corner** (or the tab-title indicator) now always removes it from matching tabs. Before, tabs could keep their overlay if the extension had been reloaded or two refreshes overlapped.
+- After the extension is reloaded or updated, or Chrome starts, overlays left in open pages by the previous copy of the extension (with buttons that did nothing) are replaced right away instead of at the next minute.
 
 ### Changed
 - The settings page is styled with [Tailwind CSS](https://tailwindcss.com/). It looks the same as before, in light and dark mode. `src/options.css` is now compiled from `styles/options.tailwind.css` with `npm run build:css` (or `npm run watch:css` while editing) and committed, so the extension still loads unpacked without a build step.

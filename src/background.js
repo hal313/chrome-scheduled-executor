@@ -150,8 +150,12 @@ async function refreshIndicators(settings, onlyTabId) {
     : [await chrome.tabs.get(onlyTabId).catch(() => null)].filter(Boolean);
 
   await Promise.all(tabs.map(async (tab) => {
-    if (wantsAny && urlMatches(settings.url, tab.url)) {
-      if (await applyIndicator(tab.id, { ...base, lastRun: tabRuns[tab.id] })) shown.add(tab.id);
+    if (urlMatches(settings.url, tab.url)) {
+      // Always send matching tabs their full state, even "show nothing", so turning
+      // an indicator off removes it whether or not the tab is in `shown` (which is
+      // wiped when the extension reloads, and can lose tabs to overlapping refreshes).
+      const state = wantsAny ? { ...base, lastRun: tabRuns[tab.id] } : NOTHING;
+      if (await applyIndicator(tab.id, state)) shown.add(tab.id);
     } else if (shown.has(tab.id)) {
       await applyIndicator(tab.id, NOTHING);
       shown.delete(tab.id);
@@ -230,10 +234,16 @@ async function onTick() {
 
 chrome.runtime.onInstalled.addListener(async (details) => {
   await ensureAlarm();
+  // After a reload or update, open pages still have overlays from the previous
+  // copy of the extension, with dead buttons; replace or remove them right away.
+  await refreshIndicators();
   if (details.reason === 'install') chrome.runtime.openOptionsPage();
 });
 
-chrome.runtime.onStartup.addListener(ensureAlarm);
+chrome.runtime.onStartup.addListener(async () => {
+  await ensureAlarm();
+  await refreshIndicators();
+});
 
 // The settings page asks here: an already-open page doesn't notice when
 // "Allow User Scripts" is switched on, but the service worker does.

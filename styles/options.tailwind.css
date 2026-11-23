@@ -1,35 +1,36 @@
-/* Tailwind source for the settings page. Compiled to src/options.css by `npm run build:css`
-   (or `npm run watch:css` while editing). Edit this file and the classes in options.html /
-   options.js, not src/options.css. */
-@import "tailwindcss";
-
+/* Tailwind source for the settings page, styled to match Google Calendar Enhancements.
+   Build src/options.css with `npm run build:css` (or `npm run watch:css` while editing).
+   Only options.html and options.js are scanned for class names. Edit this file and those
+   two, not src/options.css. */
+@import "tailwindcss" source(none);
 @source "../src/options.html";
 @source "../src/options.js";
 
-@theme {
-  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
-  --color-fg: #1f2328;
-  --color-muted: #59636e;
-  --color-bg: #ffffff;
-  --color-border: #d1d9e0;
-  --color-accent: #0969da;
-  --color-ok: #1a7f37;
-  --color-bad: #cf222e;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-fg: #e6edf3;
-    --color-muted: #9198a1;
-    --color-bg: #0d1117;
-    --color-border: #3d444d;
-    --color-accent: #4493f8;
-    --color-ok: #3fb950;
-    --color-bad: #f85149;
+/* On/off switch: a checkbox drawn as a sliding toggle. */
+@layer components {
+  .switch {
+    @apply relative h-5 w-9 flex-none cursor-pointer appearance-none rounded-full bg-slate-300 transition-colors
+      checked:bg-blue-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600
+      dark:bg-slate-600 dark:checked:bg-blue-500;
   }
-}
+  .switch::before {
+    content: "";
+    @apply absolute top-0.5 left-0.5 size-4 rounded-full bg-white shadow transition-transform;
+  }
+  .switch:checked::before {
+    @apply translate-x-4;
+  }
 
-@layer base {
-  :root { color-scheme: light dark; }
-  code { @apply font-mono text-xs; }
+  /* Text, time and code fields. */
+  .field {
+    @apply rounded-md border border-slate-300 bg-white px-2 py-1 focus:border-blue-500 focus:outline-2
+      focus:outline-blue-500/40 dark:border-slate-700 dark:bg-slate-800;
+  }
+
+  /* Outline buttons in the Status card. */
+  .btn {
+    @apply cursor-pointer rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium shadow-sm
+      hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600
+      dark:border-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700;
+  }
 }

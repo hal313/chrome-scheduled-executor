@@ -4,6 +4,14 @@ import { getSettings, saveSettings, userScriptsAvailable, MAX_CODE_BYTES } from 
 
 const $ = (id) => document.getElementById(id);
 
+// The toolbar pop-up opens this page as options.html?popup; give it a fixed width there.
+if (new URLSearchParams(location.search).has('popup')) document.documentElement.classList.add('popup');
+
+const HINT_CLASSES = ['text-slate-500', 'dark:text-slate-400'];
+const ERROR_CLASSES = ['text-red-600', 'dark:text-red-400'];
+const ON_CLASS = 'font-semibold text-emerald-600 dark:text-emerald-400';
+const OFF_CLASS = 'font-semibold text-slate-500 dark:text-slate-400';
+
 function describeWindow(start, stop) {
   const s = parseTime(start);
   const e = parseTime(stop);
@@ -15,8 +23,8 @@ function describeWindow(start, stop) {
 
 /** Hint lines are grey normally and red when they report a problem. */
 function setHintError(el, isError) {
-  el.classList.toggle('text-bad', isError);
-  el.classList.toggle('text-muted', !isError);
+  for (const c of ERROR_CLASSES) el.classList.toggle(c, isError);
+  for (const c of HINT_CLASSES) el.classList.toggle(c, !isError);
 }
 
 async function renderStatus() {
@@ -28,15 +36,15 @@ async function renderStatus() {
 
   const state = $('state');
   if (override && override.mode === 'on') {
-    state.innerHTML = `<span class="font-semibold text-ok">Executing now</span> (turned on until ${until})`;
+    state.innerHTML = `<span class="${ON_CLASS}">Executing now</span> (turned on until ${until})`;
   } else if (override) {
-    state.innerHTML = `<span class="font-semibold text-muted">Off</span> (turned off until ${until})`;
+    state.innerHTML = `<span class="${OFF_CLASS}">Off</span> (turned off until ${until})`;
   } else if (mode === 'disabled') {
-    state.innerHTML = '<span class="font-semibold text-muted">Disabled</span>';
+    state.innerHTML = `<span class="${OFF_CLASS}">Disabled</span>`;
   } else if (mode === 'executing') {
-    state.innerHTML = '<span class="font-semibold text-ok">Executing now</span> (inside the window)';
+    state.innerHTML = `<span class="${ON_CLASS}">Executing now</span> (inside the window)`;
   } else {
-    state.innerHTML = '<span class="font-semibold text-muted">Waiting</span> (outside the window)';
+    state.innerHTML = `<span class="${OFF_CLASS}">Waiting</span> (outside the window)`;
   }
   document.querySelector('[data-override="resume"]').hidden = !override;
 
@@ -99,21 +107,34 @@ function updateHint() {
   $('windowHint').textContent = describeWindow($('startTime').value, $('stopTime').value);
 }
 
+// Fields that each save one setting as soon as they change, by element ID.
+const CHECKBOXES = ['enabled', 'showTitleIndicator', 'showOverlay'];
+const TEXT_FIELDS = ['startTime', 'stopTime', 'url', 'code'];
+
 async function fillForm() {
   const settings = await getSettings();
-  $('enabled').checked = settings.enabled;
-  $('startTime').value = settings.startTime;
-  $('stopTime').value = settings.stopTime;
-  $('url').value = settings.url;
-  $('code').value = settings.code;
-  $('showTitleIndicator').checked = settings.showTitleIndicator;
-  $('showOverlay').checked = settings.showOverlay;
+  // Leave the field being typed in alone, so a synced change doesn't wipe unsaved edits.
+  for (const id of CHECKBOXES) $(id).checked = settings[id];
+  for (const id of TEXT_FIELDS) if (document.activeElement !== $(id)) $(id).value = settings[id];
   updateHint();
   updateUrlHint();
   updateCodeHint();
 }
 
+let saveStatusTimer;
+
+/** Saves some settings and briefly shows "Saved" in the header. */
+async function save(partial) {
+  await saveSettings(partial);
+  const el = $('saveStatus');
+  el.textContent = 'Saved';
+  clearTimeout(saveStatusTimer);
+  saveStatusTimer = setTimeout(() => { el.textContent = ''; }, 1500);
+  renderStatus();
+}
+
 async function init() {
+  $('version').textContent = `Version ${chrome.runtime.getManifest().version}`;
   await fillForm();
   renderUserScriptsBanner();
   renderStatus();
@@ -143,32 +164,26 @@ async function init() {
   window.addEventListener('focus', renderUserScriptsBanner);
   document.addEventListener('visibilitychange', renderUserScriptsBanner);
 
-  $('form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const url = $('url').value.trim();
-    if (!compilePattern(url)) {
-      updateUrlHint();
-      return;
-    }
-    const code = $('code').value;
-    if (codeTooLong(code)) {
-      updateCodeHint();
-      return;
-    }
-
-    await saveSettings({
-      enabled: $('enabled').checked,
-      startTime: $('startTime').value,
-      stopTime: $('stopTime').value,
-      url,
-      code,
-      showTitleIndicator: $('showTitleIndicator').checked,
-      showOverlay: $('showOverlay').checked,
+  // Save each field as soon as it changes (text fields: when you leave them),
+  // like the Google Calendar Enhancements options page. Invalid values aren't saved;
+  // their hint explains why.
+  for (const id of CHECKBOXES) {
+    $(id).addEventListener('change', () => save({ [id]: $(id).checked }));
+  }
+  for (const id of ['startTime', 'stopTime']) {
+    $(id).addEventListener('change', () => {
+      if (parseTime($(id).value) !== null) save({ [id]: $(id).value });
     });
-
-    $('saved').hidden = false;
-    setTimeout(() => { $('saved').hidden = true; }, 1500);
-    renderStatus();
+  }
+  $('url').addEventListener('change', () => {
+    const url = $('url').value.trim();
+    if (compilePattern(url)) save({ url });
+    else updateUrlHint();
+  });
+  $('code').addEventListener('change', () => {
+    const code = $('code').value;
+    if (!codeTooLong(code)) save({ code });
+    else updateCodeHint();
   });
 
   chrome.storage.onChanged.addListener((changes, area) => {

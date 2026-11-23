@@ -2,6 +2,13 @@
 
 All notable changes to Scheduled Executor. Versions match `manifest.json`.
 
+## [1.7.0] - 2026-11-22
+
+### Changed
+- The settings page is redesigned to match the Google Calendar Enhancements options page: a header with the name and version, settings grouped into cards (**Schedule**, **Pages and code**, **Indicators on matching tabs**, **Status**), and switches for the on/off settings. Light and dark mode follow the system.
+- Settings save as soon as they change (text boxes when you leave them), with **Saved** shown in the header. The **Save** button is gone. Invalid values aren't saved; the hint under them says why.
+- The toolbar pop-up keeps a fixed width (it opens the page as `options.html?popup`).
+
 ## [1.6.5] - 2026-11-22
 
 ### Fixed

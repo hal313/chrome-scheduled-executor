@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Scheduled Executor",
-  "version": "1.6.5",
+  "version": "1.7.0",
   "description": "Runs execution code every minute in pages matching a URL pattern, only between a start and stop time you choose.",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArrqhL+fb7jCPi4AEB+vtmkQfDyUTi61wKnfEqSzH3tLVsg0oIFllm+Mz6P8k1QP+CIWG7H1yP6TA+A7cKyQBL4icrnVp3mrXyQPf7w+4kVlstpQPsEwZ5aUGsDzCazzPHifC1fWvb4vEwbKlqkdOFpugUhTZGeFJx0g2fdQ3tn31sdT8SXXscDuF2b6gbDEm2xvGwXPjZg3mGJysEm0zXCwz3hx/40xT8Pb7i2QlGPf5o9/0+zX5JoiwYS90n7m7ctQLy9HCwS4I7RBwFnocHELLqpMllHHKY4YHGdgBVQD27aQDDmevkhjUIewBCK680emgweCl8cUcC2TJldW+/QIDAQAB",
   "permissions": [
@@ -19,7 +19,7 @@
   },
   "action": {
     "default_title": "Scheduled Executor",
-    "default_popup": "src/options.html",
+    "default_popup": "src/options.html?popup",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",

@@ -19,6 +19,9 @@ After editing code, click the reload icon on the extension's card in `chrome://e
 
 ## Settings
 
+Settings save as soon as you change them; text boxes save when you leave them. A value that isn't
+valid (such as an invalid URL pattern) isn't saved, and the hint under it says why.
+
 | Setting           | Meaning                                                                  |
 |-------------------|--------------------------------------------------------------------------|
 | Executing enabled | Master on/off switch.                                                    |
@@ -108,7 +111,7 @@ For this to work:
 
 ## The code to execute
 
-Type the code in the **Code to execute** box on the settings page and click **Save**. It syncs with
+Type the code in the **Code to execute** box on the settings page; it's saved when you click outside the box. It syncs with
 the other settings, so it's the same in every Chrome you're signed in to.
 
 The code runs inside each matching page, the same as if you pasted it into that page's DevTools
@@ -169,10 +172,11 @@ Requires Node 18+. The tests need no dependencies.
 
 ## Styling the settings page
 
-The settings page uses [Tailwind CSS](https://tailwindcss.com/) classes. Chrome extensions can't load
+The settings page uses [Tailwind CSS](https://tailwindcss.com/) classes, styled to match the
+Google Calendar Enhancements options page. Chrome extensions can't load
 Tailwind from a CDN, so `src/options.css` is compiled from `styles/options.tailwind.css` and
 committed, which keeps the extension loadable unpacked without a build step. After changing classes
-in `src/options.html` or `src/options.js`, or the colors in `styles/options.tailwind.css`, rebuild it:
+in `src/options.html` or `src/options.js`, or the components (switch, field, button) in `styles/options.tailwind.css`, rebuild it:
 
 ```
 npm install

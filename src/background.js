@@ -52,10 +52,16 @@ async function execute(tab, settings) {
 }
 // ---------------------------------------------------------------------------
 
-/** Open tabs whose URL matches the configured pattern. */
+/**
+ * Open tabs whose URL matches the configured pattern, split into loaded tabs
+ * and discarded ones (put to sleep by Memory Saver), which can't run code.
+ */
 async function findMatchingTabs(pattern) {
-  const tabs = await chrome.tabs.query({});
-  return tabs.filter((tab) => urlMatches(pattern, tab.url));
+  const tabs = (await chrome.tabs.query({})).filter((tab) => urlMatches(pattern, tab.url));
+  return {
+    loaded: tabs.filter((tab) => !tab.discarded),
+    asleep: tabs.filter((tab) => tab.discarded),
+  };
 }
 
 async function ensureAlarm() {
@@ -171,9 +177,12 @@ async function recordTabRuns(tabs, results) {
 async function runTick(settings) {
   if (!isActive(settings)) return;
 
-  const tabs = await findMatchingTabs(settings.url);
+  const { loaded: tabs, asleep } = await findMatchingTabs(settings.url);
   if (tabs.length === 0) {
-    await recordStatus({ ok: true, summary: 'Skipped: no open tab matches the URL pattern' });
+    const summary = asleep.length > 0
+      ? `Skipped: ${asleep.length} matching tab(s), all asleep (discarded by Chrome)`
+      : 'Skipped: no open tab matches the URL pattern';
+    await recordStatus({ ok: true, summary });
     return;
   }
 

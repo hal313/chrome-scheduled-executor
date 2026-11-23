@@ -84,8 +84,8 @@ the last execution in that tab. The buttons, left to right:
 The button for what's in effect right now (a running override, or else the schedule switch) is
 highlighted. While a 1-hour override is running, the badge has a small amber dot and the state
 icon's tooltip says when it ends. After the hour, it goes back to the normal schedule on its own.
-Overrides sync like the settings, so they apply in every signed-in Chrome. The settings page also has
-the override buttons and "Back to schedule", under **Status**.
+Overrides sync like the settings, so they apply in every signed-in Chrome. While one is running, the
+settings page shows **Back to schedule** under **Status** to cancel it.
 
 The overlay sits in its own shadow DOM so it doesn't pick up or affect the page's styles.
 

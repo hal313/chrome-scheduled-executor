@@ -2,6 +2,11 @@
 
 All notable changes to Scheduled Executor. Versions match `manifest.json`.
 
+## [1.7.1] - 2026-11-22
+
+### Removed
+- **On for 1 hour** and **Off for 1 hour** buttons on the settings page. Use **Run for 1 hour** and **Sleep for 1 hour** in the overlay instead. **Back to schedule** still appears under **Status** while an override is running.
+
 ## [1.7.0] - 2026-11-22
 
 ### Changed

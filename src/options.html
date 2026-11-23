@@ -3,70 +3,71 @@
 <head>
   <meta charset="utf-8">
   <title>Scheduled Executor</title>
+  <!-- Built from styles/options.tailwind.css with `npm run build:css`. -->
   <link rel="stylesheet" href="options.css">
 </head>
-<body>
-  <main>
-    <h1>Scheduled Executor</h1>
+<body class="bg-bg font-sans text-sm/[1.45] text-fg">
+  <main class="w-105 p-4">
+    <h1 class="mb-3 text-base font-bold">Scheduled Executor</h1>
 
-    <div id="userScriptsBanner" class="banner" hidden>
-      <strong>One-time setup needed.</strong> Chrome only lets an extension run code from its settings
-      after you turn on <em>Allow User Scripts</em> for it.
-      <button type="button" id="openDetails">Open extension details</button>
-      <span class="hint">Turn on "Allow User Scripts", then come back to this page.</span>
+    <div id="userScriptsBanner" class="mb-3.5 flex flex-col items-start gap-2 rounded-md border border-bad px-3 py-2.5" hidden>
+      <div><strong>One-time setup needed.</strong> Chrome only lets an extension run code from its settings
+      after you turn on <em>Allow User Scripts</em> for it.</div>
+      <button type="button" id="openDetails" class="cursor-pointer rounded-md bg-accent px-3.5 py-1.5 font-semibold text-white">Open extension details</button>
+      <span class="text-xs text-muted">Turn on "Allow User Scripts", then come back to this page.</span>
     </div>
 
     <form id="form">
-      <label class="row checkbox">
+      <label class="mb-3 flex items-center gap-2 font-medium">
         <input type="checkbox" id="enabled">
         Executing enabled
       </label>
 
-      <div class="times">
-        <label>Start
-          <input type="time" id="startTime" required>
+      <div class="flex gap-3">
+        <label class="flex flex-1 flex-col gap-1 font-medium">Start
+          <input type="time" id="startTime" required class="rounded-md border border-border px-2 py-1.5 font-normal">
         </label>
-        <label>Stop
-          <input type="time" id="stopTime" required>
+        <label class="flex flex-1 flex-col gap-1 font-medium">Stop
+          <input type="time" id="stopTime" required class="rounded-md border border-border px-2 py-1.5 font-normal">
         </label>
       </div>
-      <p class="hint" id="windowHint"></p>
+      <p class="mt-1.5 mb-3 text-xs text-muted" id="windowHint"></p>
 
-      <label>URL pattern (regular expression)
-        <input type="text" id="url" spellcheck="false" placeholder="teams\.cloud\.microsoft">
+      <label class="flex flex-col gap-1 font-medium">URL pattern (regular expression)
+        <input type="text" id="url" spellcheck="false" placeholder="teams\.cloud\.microsoft" class="rounded-md border border-border px-2 py-1.5 font-normal">
       </label>
-      <p class="hint" id="urlHint"></p>
+      <p class="mt-1.5 mb-3 text-xs text-muted" id="urlHint"></p>
 
-      <label>Code to execute (JavaScript)
-        <textarea id="code" rows="12" spellcheck="false" wrap="off"></textarea>
+      <label class="flex flex-col gap-1 font-medium">Code to execute (JavaScript)
+        <textarea id="code" rows="12" spellcheck="false" wrap="off" class="resize-y rounded-md border border-border px-2 py-1.5 font-mono text-xs/[1.45] font-normal [tab-size:2]"></textarea>
       </label>
-      <p class="hint" id="codeHint">Runs in each matching page like code typed into its DevTools console. You can use <code>await</code>, and whatever you <code>return</code> is shown below as the last execution.</p>
+      <p class="mt-1.5 mb-3 text-xs text-muted" id="codeHint">Runs in each matching page like code typed into its DevTools console. You can use <code>await</code>, and whatever you <code>return</code> is shown below as the last execution.</p>
 
-      <fieldset class="row">
-        <legend>Indicators on matching tabs</legend>
-        <label class="checkbox">
+      <fieldset class="mb-3 rounded-md border border-border px-3 pt-2 pb-2.5">
+        <legend class="px-1 font-medium">Indicators on matching tabs</legend>
+        <label class="mt-1 flex items-center gap-2">
           <input type="checkbox" id="showTitleIndicator">
-          <span>&#x23F1; in the tab title while executing</span>
+          <span>Show &#x23F1; in the tab title while executing</span>
         </label>
-        <label class="checkbox">
+        <label class="mt-1 flex items-center gap-2">
           <input type="checkbox" id="showOverlay">
           <span>Overlay in the page corner (executing, waiting or disabled)</span>
         </label>
       </fieldset>
 
-      <button type="submit">Save</button>
-      <span id="saved" class="saved" hidden>Saved</span>
+      <button type="submit" class="cursor-pointer rounded-md bg-accent px-3.5 py-1.5 font-semibold text-white">Save</button>
+      <span id="saved" class="ml-2 text-ok" hidden>Saved</span>
     </form>
 
-    <section class="status">
-      <h2>Status</h2>
-      <p id="state"></p>
-      <div class="override">
-        <button type="button" class="secondary" data-override="on">On for 1 hour</button>
-        <button type="button" class="secondary" data-override="off">Off for 1 hour</button>
-        <button type="button" class="secondary" data-override="resume" hidden>Back to schedule</button>
+    <section>
+      <h2 class="mt-4 mb-1 text-[13px] font-bold tracking-wide text-muted uppercase">Status</h2>
+      <p id="state" class="my-1"></p>
+      <div class="my-1.5 flex flex-wrap gap-1.5">
+        <button type="button" class="cursor-pointer rounded-md border border-border px-2.5 py-1 font-medium" data-override="on">On for 1 hour</button>
+        <button type="button" class="cursor-pointer rounded-md border border-border px-2.5 py-1 font-medium" data-override="off">Off for 1 hour</button>
+        <button type="button" class="cursor-pointer rounded-md border border-border px-2.5 py-1 font-medium" data-override="resume" hidden>Back to schedule</button>
       </div>
-      <p id="lastStatus" class="hint"></p>
+      <p id="lastStatus" class="my-1 text-xs text-muted"></p>
     </section>
   </main>
   <script type="module" src="options.js"></script>

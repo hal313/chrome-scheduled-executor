@@ -114,11 +114,15 @@ function indicatorState(settings) {
     title: executing && settings.showTitleIndicator,
     overlay: settings.showOverlay ? mode : null,
     overridden: Boolean(override),
+    overrideMode: override ? override.mode : null,
+    enabled: Boolean(settings.enabled),
     label,
   };
 }
 
-const NOTHING = { prefix: TITLE_PREFIX, title: false, overlay: null, overridden: false, label: '' };
+const NOTHING = {
+  prefix: TITLE_PREFIX, title: false, overlay: null, overridden: false, overrideMode: null, enabled: false, label: '',
+};
 
 async function applyIndicator(tabId, state) {
   try {
@@ -237,8 +241,9 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (!msg) return;
   if (msg.type === 'userScriptsAvailable') sendResponse(userScriptsAvailable());
   if (msg.type === 'setOverride') setOverride(msg.mode).then(() => sendResponse(true));
+  if (msg.type === 'setSchedule') setSchedule(msg.enabled).then(() => sendResponse(true));
   if (msg.type === 'openOptions') chrome.runtime.openOptionsPage();
-  return msg.type === 'setOverride'; // keep the channel open for the async reply
+  return msg.type === 'setOverride' || msg.type === 'setSchedule'; // keep the channel open for the async reply
 });
 
 /**
@@ -254,6 +259,16 @@ async function setOverride(mode) {
   }
   // Execute right away when switched on, instead of waiting for the next minute.
   if (mode === 'on') await onTick();
+}
+
+/**
+ * Enable / disable buttons on the overlay: turn the normal schedule on or off
+ * (the "Executing enabled" setting) and cancel any 1-hour override, so the
+ * choice takes effect right away instead of after the override ends.
+ */
+async function setSchedule(enabled) {
+  await chrome.storage.sync.set({ enabled: Boolean(enabled) });
+  await chrome.storage.sync.remove('override');
 }
 
 chrome.alarms.onAlarm.addListener((alarm) => {

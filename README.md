@@ -64,22 +64,25 @@ executing stops.
 | Hollow white ring with ⏸               | Waiting   | Enabled, but outside the time window.           |
 | Dark, dashed ring with ⊘               | Disabled  | "Executing enabled" is turned off, or turned off for 1 hour. |
 
-Hover it and it slides open into a one-line pill with the details: the time window, and while
-executing, the time and result of the last execution in that tab. The **⋯** button at the end of the
-pill opens a pop-up with the same details and these buttons:
+Hover it and it slides open into a row of icon buttons, with the state icon staying on the right.
+Each button shows its name in a tooltip as soon as you hover it.
+Hover the state icon for the details: the time window, and while executing, the time and result of
+the last execution in that tab. The buttons, left to right:
 
-| Button            | What it does                                                                 |
-|-------------------|------------------------------------------------------------------------------|
-| On for 1 hour     | Executes every minute for the next hour, even outside the time window or when "Executing enabled" is off. Runs once immediately. |
-| Off for 1 hour    | Stops executing for the next hour, even inside the time window.             |
-| Back to schedule  | Shown while one of the above is running; cancels it early.                  |
-| ⚙ (gear, top-right) | Opens the settings page.                                                   |
+| Button                  | What it does                                                                 |
+|-------------------------|------------------------------------------------------------------------------|
+| ⚙ Extension options     | Opens the settings page.                                                     |
+| ☾ Sleep for 1 hour      | Stops executing for the next hour, even inside the time window.             |
+| ▷ Run for 1 hour        | Executes every minute for the next hour, even outside the time window or when "Executing enabled" is off. Runs once immediately. |
+| ↺ Back to schedule      | Cancels a running 1-hour override early. Dimmed when no override is running. |
+| 🕒 Enable the normal schedule  | Turns "Executing enabled" on and cancels any 1-hour override.        |
+| ⊘ Disable the normal schedule | Turns "Executing enabled" off and cancels any 1-hour override.       |
 
-The pop-up stays open until you pick a button, click elsewhere on the page, or press Escape. While a
-1-hour override is running, the badge has a small amber dot and the pill and pop-up say when it ends.
-After the hour, it goes back to the normal schedule on its own. Overrides sync like the settings, so
-they apply in every signed-in Chrome. The same three override buttons are also on the settings page,
-under **Status**.
+The button for what's in effect right now (a running override, or else the schedule switch) is
+highlighted. While a 1-hour override is running, the badge has a small amber dot and the state
+icon's tooltip says when it ends. After the hour, it goes back to the normal schedule on its own.
+Overrides sync like the settings, so they apply in every signed-in Chrome. The settings page also has
+the override buttons and "Back to schedule", under **Status**.
 
 The overlay sits in its own shadow DOM so it doesn't pick up or affect the page's styles.
 

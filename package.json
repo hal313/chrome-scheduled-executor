@@ -5,6 +5,12 @@
   "description": "Chrome extension that executes code every minute between a start and stop time.",
   "type": "module",
   "scripts": {
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "build:css": "tailwindcss -i styles/options.tailwind.css -o src/options.css --minify",
+    "watch:css": "tailwindcss -i styles/options.tailwind.css -o src/options.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "4.1.11",
+    "tailwindcss": "4.1.11"
   }
 }

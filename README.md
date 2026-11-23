@@ -154,6 +154,7 @@ src/match.js        URL-pattern matching (unit tested)
 src/indicator.js    tab-title prefix and corner badge injected into active tabs
 src/settings.js     defaults + chrome.storage helpers
 src/options.*       settings / status page (also the toolbar popup)
+styles/             Tailwind source for src/options.css
 test/               Node unit tests
 icons/
 ```
@@ -164,4 +165,16 @@ icons/
 npm test
 ```
 
-Requires Node 18+. No dependencies to install.
+Requires Node 18+. The tests need no dependencies.
+
+## Styling the settings page
+
+The settings page uses [Tailwind CSS](https://tailwindcss.com/) classes. Chrome extensions can't load
+Tailwind from a CDN, so `src/options.css` is compiled from `styles/options.tailwind.css` and
+committed, which keeps the extension loadable unpacked without a build step. After changing classes
+in `src/options.html` or `src/options.js`, or the colors in `styles/options.tailwind.css`, rebuild it:
+
+```
+npm install
+npm run build:css   # or: npm run watch:css while editing
+```

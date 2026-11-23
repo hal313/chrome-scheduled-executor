@@ -13,6 +13,12 @@ function describeWindow(start, stop) {
   return `Executes every minute from ${start} until ${stop}.`;
 }
 
+/** Hint lines are grey normally and red when they report a problem. */
+function setHintError(el, isError) {
+  el.classList.toggle('text-bad', isError);
+  el.classList.toggle('text-muted', !isError);
+}
+
 async function renderStatus() {
   const settings = await getSettings();
   const { mode, override } = effectiveState(settings, new Date());
@@ -22,15 +28,15 @@ async function renderStatus() {
 
   const state = $('state');
   if (override && override.mode === 'on') {
-    state.innerHTML = `<span class="on">Executing now</span> (turned on until ${until})`;
+    state.innerHTML = `<span class="font-semibold text-ok">Executing now</span> (turned on until ${until})`;
   } else if (override) {
-    state.innerHTML = `<span class="off">Off</span> (turned off until ${until})`;
+    state.innerHTML = `<span class="font-semibold text-muted">Off</span> (turned off until ${until})`;
   } else if (mode === 'disabled') {
-    state.innerHTML = '<span class="off">Disabled</span>';
+    state.innerHTML = '<span class="font-semibold text-muted">Disabled</span>';
   } else if (mode === 'executing') {
-    state.innerHTML = '<span class="on">Executing now</span> (inside the window)';
+    state.innerHTML = '<span class="font-semibold text-ok">Executing now</span> (inside the window)';
   } else {
-    state.innerHTML = '<span class="off">Waiting</span> (outside the window)';
+    state.innerHTML = '<span class="font-semibold text-muted">Waiting</span> (outside the window)';
   }
   document.querySelector('[data-override="resume"]').hidden = !override;
 
@@ -38,10 +44,10 @@ async function renderStatus() {
   const el = $('lastStatus');
   if (lastStatus) {
     el.textContent = `Last execution ${new Date(lastStatus.at).toLocaleString()}: ${lastStatus.summary}`;
-    el.className = lastStatus.ok ? 'hint' : 'hint err';
+    setHintError(el, !lastStatus.ok);
   } else {
     el.textContent = 'No executions yet.';
-    el.className = 'hint';
+    setHintError(el, false);
   }
 }
 
@@ -50,18 +56,18 @@ async function updateUrlHint() {
   const el = $('urlHint');
   if (!pattern) {
     el.textContent = 'Required. Code only runs in tabs whose URL matches this pattern.';
-    el.className = 'hint err';
+    setHintError(el, true);
     return;
   }
   if (!compilePattern(pattern)) {
     el.textContent = 'Not a valid regular expression.';
-    el.className = 'hint err';
+    setHintError(el, true);
     return;
   }
   const tabs = await chrome.tabs.query({});
   const n = tabs.filter((t) => urlMatches(pattern, t.url)).length;
   el.textContent = `Case-insensitive match against the full page URL. ${n} open tab(s) match right now.`;
-  el.className = 'hint';
+  setHintError(el, false);
 }
 
 async function renderUserScriptsBanner() {
@@ -81,11 +87,11 @@ function updateCodeHint() {
   if (codeTooLong($('code').value)) {
     el.dataset.base ??= el.innerHTML;
     el.textContent = `Too long: Chrome sync allows about ${MAX_CODE_BYTES / 1000} KB of code.`;
-    el.className = 'hint err';
+    setHintError(el, true);
   } else if (el.dataset.base) {
     el.innerHTML = el.dataset.base;
     delete el.dataset.base;
-    el.className = 'hint';
+    setHintError(el, false);
   }
 }
 

@@ -2,6 +2,14 @@
 
 All notable changes to Scheduled Executor. Versions match `manifest.json`.
 
+## [1.7.2] - 2026-11-22
+
+### Changed
+- The **Status** card on the settings page shows the current state and the last execution as two rows, like the **Indicators on matching tabs** card.
+
+### Removed
+- **Back to schedule** button on the settings page. Use **Back to schedule** in the overlay instead.
+
 ## [1.7.1] - 2026-11-22
 
 ### Removed

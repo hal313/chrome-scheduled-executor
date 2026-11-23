@@ -84,8 +84,8 @@ the last execution in that tab. The buttons, left to right:
 The button for what's in effect right now (a running override, or else the schedule switch) is
 highlighted. While a 1-hour override is running, the badge has a small amber dot and the state
 icon's tooltip says when it ends. After the hour, it goes back to the normal schedule on its own.
-Overrides sync like the settings, so they apply in every signed-in Chrome. While one is running, the
-settings page shows **Back to schedule** under **Status** to cancel it.
+Overrides sync like the settings, so they apply in every signed-in Chrome. To cancel one early, use
+**Back to schedule** in the overlay.
 
 The overlay sits in its own shadow DOM so it doesn't pick up or affect the page's styles.
 
@@ -176,7 +176,7 @@ The settings page uses [Tailwind CSS](https://tailwindcss.com/) classes, styled 
 Google Calendar Enhancements options page. Chrome extensions can't load
 Tailwind from a CDN, so `src/options.css` is compiled from `styles/options.tailwind.css` and
 committed, which keeps the extension loadable unpacked without a build step. After changing classes
-in `src/options.html` or `src/options.js`, or the components (switch, field, button) in `styles/options.tailwind.css`, rebuild it:
+in `src/options.html` or `src/options.js`, or the components (switch, field) in `styles/options.tailwind.css`, rebuild it:
 
 ```
 npm install

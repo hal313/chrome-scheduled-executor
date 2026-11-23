@@ -46,7 +46,6 @@ async function renderStatus() {
   } else {
     state.innerHTML = `<span class="${OFF_CLASS}">Waiting</span> (outside the window)`;
   }
-  document.querySelector('[data-override="resume"]').hidden = !override;
 
   const { lastStatus } = await chrome.storage.local.get('lastStatus');
   const el = $('lastStatus');
@@ -148,12 +147,6 @@ async function init() {
       e.preventDefault();
       e.target.setRangeText('  ', e.target.selectionStart, e.target.selectionEnd, 'end');
     }
-  });
-  document.querySelectorAll('[data-override]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const mode = btn.dataset.override === 'resume' ? null : btn.dataset.override;
-      chrome.runtime.sendMessage({ type: 'setOverride', mode });
-    });
   });
   // Overrides expire on their own; keep the status line current.
   setInterval(renderStatus, 30 * 1000);

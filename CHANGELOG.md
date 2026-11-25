@@ -2,6 +2,11 @@
 
 All notable changes to Scheduled Executor. Versions match `manifest.json`.
 
+## [1.8.0] - 2026-11-25
+
+### Changed
+- **Pause until the end of the day** is now **Sleep until the end of the day**, to match **Sleep for 1 hour**. The settings page shows "Sleeping (until the end of the day)" under **Status**.
+
 ## [1.7.3] - 2026-11-24
 
 ### Added

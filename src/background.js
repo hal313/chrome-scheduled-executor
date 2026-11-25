@@ -101,7 +101,7 @@ function indicatorState(settings) {
   if (override && override.mode === 'on') {
     label = `Scheduled Executor: on until ${hhmm(override.until)} (1-hour override)`;
   } else if (override && override.span === 'day') {
-    label = 'Scheduled Executor: paused until the end of the day';
+    label = 'Scheduled Executor: sleep until the end of the day';
   } else if (override) {
     label = `Scheduled Executor: turned off until ${hhmm(override.until)} (1-hour override)`;
   } else {
@@ -118,7 +118,7 @@ function indicatorState(settings) {
     overridden: Boolean(override),
     overrideMode: override ? override.mode : null,
     // Which overlay button started the override, so it can be highlighted.
-    overrideAction: override ? (override.span === 'day' ? 'pause-day' : override.mode) : null,
+    overrideAction: override ? (override.span === 'day' ? 'sleep-day' : override.mode) : null,
     enabled: Boolean(settings.enabled),
     label,
   };
@@ -262,7 +262,7 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
 
 /**
  * Buttons on the overlay: 'on' / 'off' for the next hour, 'off' with span 'day'
- * until midnight ("Pause until the end of the day"), or null to go back to the
+ * until midnight ("Sleep until the end of the day"), or null to go back to the
  * normal schedule. Stored in sync storage so every signed-in browser follows it.
  */
 async function setOverride(mode, span = 'hour') {

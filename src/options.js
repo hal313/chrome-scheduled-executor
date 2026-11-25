@@ -38,7 +38,7 @@ async function renderStatus() {
   if (override && override.mode === 'on') {
     state.innerHTML = `<span class="${ON_CLASS}">Executing now</span> (turned on until ${until})`;
   } else if (override && override.span === 'day') {
-    state.innerHTML = `<span class="${OFF_CLASS}">Paused</span> (until the end of the day)`;
+    state.innerHTML = `<span class="${OFF_CLASS}">Sleeping</span> (until the end of the day)`;
   } else if (override) {
     state.innerHTML = `<span class="${OFF_CLASS}">Off</span> (turned off until ${until})`;
   } else if (mode === 'disabled') {

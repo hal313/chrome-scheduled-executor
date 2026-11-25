@@ -58,8 +58,20 @@ export function nextMinuteBoundary(date) {
 export const OVERRIDE_MS = 60 * 60 * 1000; // "for 1 hour" buttons
 
 /**
- * The override set by the overlay's "On/Off for 1 hour" buttons, if it is still running.
- * @param {{ mode: 'on'|'off', until: number } | null | undefined} override
+ * Timestamp (ms) of the next local midnight after `date`: when "Pause until the
+ * end of the day" ends.
+ * @param {Date} date
+ * @returns {number}
+ */
+export function endOfDay(date) {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
+  return d.getTime();
+}
+
+/**
+ * The override set by the overlay's "Run / Sleep for 1 hour" or "Pause until the
+ * end of the day" buttons, if it is still running.
+ * @param {{ mode: 'on'|'off', until: number, span?: 'hour'|'day' } | null | undefined} override
  * @param {number} nowMs
  */
 export function activeOverride(override, nowMs) {

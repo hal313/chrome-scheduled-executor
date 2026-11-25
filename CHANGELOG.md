@@ -2,6 +2,11 @@
 
 All notable changes to Scheduled Executor. Versions match `manifest.json`.
 
+## [1.7.3] - 2026-11-24
+
+### Added
+- **Pause until the end of the day** button in the overlay, between **Extension options** and **Sleep for 1 hour**. Stops executing until midnight (local time), even inside the time window. Like the 1-hour overrides, it syncs, shows the amber dot, and **Back to schedule** cancels it. The settings page shows "Paused (until the end of the day)" under **Status**.
+
 ## [1.7.2] - 2026-11-22
 
 ### Changed

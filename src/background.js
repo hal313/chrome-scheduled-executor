@@ -2,7 +2,7 @@
 // local time is inside the configured start/stop window, runs the code from the
 // settings page (see execute()) in every open tab whose URL matches the configured `url` regular expression.
 
-import { effectiveState, nextMinuteBoundary, OVERRIDE_MS } from './schedule.js';
+import { effectiveState, endOfDay, nextMinuteBoundary, OVERRIDE_MS } from './schedule.js';
 import { urlMatches } from './match.js';
 import { getSettings, userScriptsAvailable } from './settings.js';
 import { setIndicator, TITLE_PREFIX } from './indicator.js';
@@ -100,6 +100,8 @@ function indicatorState(settings) {
   let label;
   if (override && override.mode === 'on') {
     label = `Scheduled Executor: on until ${hhmm(override.until)} (1-hour override)`;
+  } else if (override && override.span === 'day') {
+    label = 'Scheduled Executor: paused until the end of the day';
   } else if (override) {
     label = `Scheduled Executor: turned off until ${hhmm(override.until)} (1-hour override)`;
   } else {
@@ -115,13 +117,15 @@ function indicatorState(settings) {
     overlay: settings.showOverlay ? mode : null,
     overridden: Boolean(override),
     overrideMode: override ? override.mode : null,
+    // Which overlay button started the override, so it can be highlighted.
+    overrideAction: override ? (override.span === 'day' ? 'pause-day' : override.mode) : null,
     enabled: Boolean(settings.enabled),
     label,
   };
 }
 
 const NOTHING = {
-  prefix: TITLE_PREFIX, title: false, overlay: null, overridden: false, overrideMode: null, enabled: false, label: '',
+  prefix: TITLE_PREFIX, title: false, overlay: null, overridden: false, overrideMode: null, overrideAction: null, enabled: false, label: '',
 };
 
 async function applyIndicator(tabId, state) {
@@ -250,20 +254,22 @@ chrome.runtime.onStartup.addListener(async () => {
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (!msg) return;
   if (msg.type === 'userScriptsAvailable') sendResponse(userScriptsAvailable());
-  if (msg.type === 'setOverride') setOverride(msg.mode).then(() => sendResponse(true));
+  if (msg.type === 'setOverride') setOverride(msg.mode, msg.span).then(() => sendResponse(true));
   if (msg.type === 'setSchedule') setSchedule(msg.enabled).then(() => sendResponse(true));
   if (msg.type === 'openOptions') chrome.runtime.openOptionsPage();
   return msg.type === 'setOverride' || msg.type === 'setSchedule'; // keep the channel open for the async reply
 });
 
 /**
- * Buttons on the overlay (and the settings page): 'on' / 'off' for the next
- * hour, or null to go back to the normal schedule. Stored in sync storage so
- * every signed-in browser follows it.
+ * Buttons on the overlay: 'on' / 'off' for the next hour, 'off' with span 'day'
+ * until midnight ("Pause until the end of the day"), or null to go back to the
+ * normal schedule. Stored in sync storage so every signed-in browser follows it.
  */
-async function setOverride(mode) {
-  if (mode === 'on' || mode === 'off') {
-    await chrome.storage.sync.set({ override: { mode, until: Date.now() + OVERRIDE_MS } });
+async function setOverride(mode, span = 'hour') {
+  if (mode === 'off' && span === 'day') {
+    await chrome.storage.sync.set({ override: { mode, until: endOfDay(new Date()), span: 'day' } });
+  } else if (mode === 'on' || mode === 'off') {
+    await chrome.storage.sync.set({ override: { mode, until: Date.now() + OVERRIDE_MS, span: 'hour' } });
   } else {
     await chrome.storage.sync.remove('override');
   }

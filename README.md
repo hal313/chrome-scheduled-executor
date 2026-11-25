@@ -75,6 +75,7 @@ the last execution in that tab. The buttons, left to right:
 | Button                  | What it does                                                                 |
 |-------------------------|------------------------------------------------------------------------------|
 | ⚙ Extension options     | Opens the settings page.                                                     |
+| ⤓ Pause until the end of the day | Stops executing until midnight (local time), even inside the time window. |
 | ☾ Sleep for 1 hour      | Stops executing for the next hour, even inside the time window.             |
 | ▷ Run for 1 hour        | Executes every minute for the next hour, even outside the time window or when "Executing enabled" is off. Runs once immediately. |
 | ↺ Back to schedule      | Cancels a running 1-hour override early. Dimmed when no override is running. |
@@ -82,8 +83,9 @@ the last execution in that tab. The buttons, left to right:
 | ⊘ Disable the normal schedule | Turns "Executing enabled" off and cancels any 1-hour override.       |
 
 The button for what's in effect right now (a running override, or else the schedule switch) is
-highlighted. While a 1-hour override is running, the badge has a small amber dot and the state
-icon's tooltip says when it ends. After the hour, it goes back to the normal schedule on its own.
+highlighted. While an override (1 hour, or until the end of the day) is running, the badge has a
+small amber dot and the state icon's tooltip says when it ends. When it ends, it goes back to the
+normal schedule on its own.
 Overrides sync like the settings, so they apply in every signed-in Chrome. To cancel one early, use
 **Back to schedule** in the overlay.
 

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseTime, isWithinWindow, nextMinuteBoundary } from '../src/schedule.js';
+import { parseTime, isWithinWindow, nextMinuteBoundary, endOfDay } from '../src/schedule.js';
 
 const at = (h, m) => new Date(2026, 0, 15, h, m, 30);
 
@@ -84,4 +84,10 @@ test('an expired override falls back to the schedule', () => {
   const s = effectiveState({ ...base, override }, noon);
   assert.equal(s.mode, 'executing');
   assert.equal(s.override, null);
+});
+
+test('endOfDay is the next local midnight', () => {
+  assert.equal(endOfDay(at(14, 5)), new Date(2026, 0, 16, 0, 0, 0).getTime());
+  assert.equal(endOfDay(new Date(2026, 0, 15, 0, 0, 0)), new Date(2026, 0, 16).getTime());
+  assert.equal(endOfDay(new Date(2026, 11, 31, 23, 59)), new Date(2027, 0, 1).getTime());
 });
